@@ -20,6 +20,12 @@ If you use Homebrew:
 brew install neural-chilli/tap/qp
 ```
 
+One-line installer:
+
+```bash
+curl -sSfL https://raw.githubusercontent.com/neural-chilli/qp/main/install.sh | sh
+```
+
 If you prefer not to install with Go, tagged releases now also publish prebuilt archives for macOS, Linux, and Windows on GitHub.
 
 If you are working from a local checkout:
