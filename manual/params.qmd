@@ -1,0 +1,203 @@
+---
+title: "Task Parameters"
+---
+
+Task parameters make task interfaces explicit and self-documenting. Instead of burying ad-hoc shell parsing inside commands, declare inputs once and let `qp` validate and map values consistently.
+
+## Why Use Params
+
+Declared params give you:
+
+- consistent CLI UX (`qp help <task>` shows usage)
+- fail-fast validation for required inputs
+- env mapping via `env:`
+- interpolation in commands using `{{params.<name>}}`
+
+## Named Params
+
+```yaml
+tasks:
+  build-image:
+    desc: Build a container image for one service
+    cmd: docker build -t ghcr.io/acme/{{params.service}}:{{params.tag}} .
+    params:
+      service:
+        desc: Service folder under cmd/
+        required: true
+      tag:
+        desc: Container tag
+        default: latest
+```
+
+Three equivalent invocation styles:
+
+```bash
+qp build-image --service payments --tag 1.8.2
+qp build-image --service=payments --tag=1.8.2
+qp build-image --param service=payments --param tag=1.8.2
+```
+
+## Positional Params
+
+Use `position` for args that feel natural as ordered inputs:
+
+```yaml
+tasks:
+  deploy:
+    desc: Deploy one service to one environment
+    cmd: ./scripts/deploy.sh {{params.service}} {{params.env}}
+    params:
+      service:
+        required: true
+        position: 1
+      env:
+        required: true
+        position: 2
+```
+
+```bash
+qp deploy payments prod
+```
+
+`qp help deploy` will show the positional contract directly in the usage line.
+
+## Variadic Positional Params
+
+The final positional param can be variadic:
+
+```yaml
+tasks:
+  pack:
+    desc: Bundle one target plus many files
+    cmd: ./scripts/pack.sh {{params.target}} {{params.files}}
+    params:
+      target:
+        required: true
+        position: 1
+      files:
+        required: true
+        position: 2
+        variadic: true
+```
+
+```bash
+qp pack release dist/app.tar.gz dist/docs.tar.gz dist/sbom.json
+```
+
+Rules:
+
+1. Only positional params can be variadic.
+2. Only one variadic param is allowed.
+3. The variadic param must be the last positional param.
+
+## Required, Optional, and Defaults
+
+```yaml
+tasks:
+  rollout:
+    desc: Trigger rollout
+    cmd: ./scripts/rollout.sh {{params.region}} {{params.strategy}}
+    params:
+      region:
+        required: true
+      strategy:
+        default: rolling
+```
+
+```bash
+qp rollout --region eu-west-1
+# strategy resolves to "rolling"
+```
+
+If a required value is missing, `qp` fails before executing the command.
+
+## Env Injection
+
+`env:` maps a param into the command process environment:
+
+```yaml
+tasks:
+  e2e:
+    desc: Run Playwright suite for one feature area
+    cmd: npm run test:e2e
+    params:
+      feature:
+        required: true
+        env: FEATURE
+```
+
+```bash
+qp e2e --feature billing
+```
+
+Inside the command, `$FEATURE` is available as `billing`.
+
+## Interpolation In Commands
+
+Params can be interpolated directly:
+
+```yaml
+tasks:
+  bench:
+    desc: Benchmark package
+    cmd: go test -bench . ./{{params.package}}
+    params:
+      package:
+        required: true
+```
+
+```bash
+qp bench --package internal/features/query
+```
+
+## Parsing And Precedence
+
+For declared params, `qp` resolves in this order:
+
+1. Direct flags (`--name value` or `--name=value`)
+2. Repeated `--param name=value`
+3. Positional assignment by `position`
+4. Param `default`
+
+Required params with no resolved value fail fast.
+
+## Complete Worked Example
+
+```yaml
+vars:
+  default_tag:
+    sh: git rev-parse --short HEAD
+
+tasks:
+  deploy:
+    desc: Deploy selected components
+    cmd: ./scripts/deploy.sh {{params.region}} {{params.tag}} {{params.targets}}
+    params:
+      region:
+        desc: AWS region
+        required: true
+        position: 1
+      tag:
+        desc: Release tag
+        default: "{{vars.default_tag}}"
+      targets:
+        desc: One or more services
+        required: true
+        position: 2
+        variadic: true
+```
+
+```bash
+# positional region + variadic targets, tag defaults from vars
+qp deploy eu-west-1 api worker
+
+# explicit named tag override
+qp deploy eu-west-1 api worker --tag v2.3.0
+
+# fully explicit via --param form
+qp deploy --param region=eu-west-1 --param tag=v2.3.0 --param targets="api worker"
+```
+
+## Next Step
+
+Once task interfaces are clear, use [DAGs and Run Expressions](dags.qmd) to compose tasks into branch-aware workflows.

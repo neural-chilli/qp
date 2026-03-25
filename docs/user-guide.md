@@ -73,6 +73,7 @@ If you prefer a browsable multi-page manual with search, left navigation, and ri
 - [Manual home](../manual/index.qmd)
 - [Core concepts](../manual/concepts.qmd)
 - [Tasks reference](../manual/tasks.qmd)
+- [Task parameters](../manual/params.qmd)
 
 ## Windows Daemon Mode
 
