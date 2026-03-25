@@ -102,6 +102,7 @@ If you prefer a browsable multi-page manual with search, left navigation, and ri
 - [Cookbook: Java + Gradle](../manual/cookbook/java-gradle.qmd)
 - [Cookbook: Agent workflow](../manual/cookbook/agent-workflow.qmd)
 - [Cookbook: Migration from Make](../manual/cookbook/migration-from-make.qmd)
+- [Cookbook: Migration from just](../manual/cookbook/migration-from-just.qmd)
 
 ## Windows Daemon Mode
 

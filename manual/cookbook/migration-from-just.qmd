@@ -1,0 +1,100 @@
+---
+title: "Cookbook: Migration from just"
+---
+
+This recipe helps teams migrate from `just` while preserving ergonomics and gradually adding richer metadata.
+
+## Strategy
+
+1. Keep existing just recipes initially.
+2. Map important recipes to `qp` tasks.
+3. Add params/scopes/safety gradually.
+4. Move CI and agent flows to `qp` once stable.
+
+## Step 1: Wrap Existing just Recipes
+
+```yaml
+tasks:
+  lint:
+    desc: Run just lint
+    cmd: just lint
+
+  test:
+    desc: Run just test
+    cmd: just test
+
+  build:
+    desc: Run just build
+    cmd: just build
+
+  check:
+    desc: Validation gate
+    steps: [lint, test]
+```
+
+## Step 2: Surface Hidden Parameters
+
+If your just recipe expects ad-hoc args, expose them as declared params:
+
+```yaml
+tasks:
+  deploy:
+    desc: Deploy selected env
+    cmd: just deploy {{params.env}}
+    params:
+      env:
+        required: true
+```
+
+```bash
+qp deploy --env staging
+```
+
+## Step 3: Add Safety + Agent Visibility
+
+```yaml
+tasks:
+  release:
+    desc: Trigger release workflow
+    cmd: just release
+    safety: external
+    agent: false
+```
+
+This keeps autonomous runs safe while preserving human workflows.
+
+## Step 4: Introduce Guards and Structured Output
+
+```yaml
+guards:
+  ci:
+    steps: [check, build]
+
+tasks:
+  ci:
+    desc: CI entrypoint
+    cmd: qp guard ci --json
+```
+
+Use in CI:
+
+```bash
+qp ci
+```
+
+## Helpful Compatibility Aliases
+
+```yaml
+aliases:
+  t: test
+  l: lint
+  c: check
+```
+
+This softens transition for developers used to short just invocations.
+
+## Why Teams Usually Like This Migration
+
+1. Keep familiar command behavior early.
+2. Gain explicit interfaces and validation over time.
+3. Add machine-readable outputs and agent-ready workflows without a big-bang rewrite.

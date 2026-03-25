@@ -67,6 +67,7 @@ website:
           - cookbook/java-gradle.qmd
           - cookbook/agent-workflow.qmd
           - cookbook/migration-from-make.qmd
+          - cookbook/migration-from-just.qmd
 
 format:
   html:
