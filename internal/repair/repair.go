@@ -211,10 +211,7 @@ func (g *Generator) gitDiffLines() []string {
 }
 
 func (g *Generator) gitDiffCap() int {
-	if g.cfg.Context.Caps.GitDiffLines > 0 {
-		return g.cfg.Context.Caps.GitDiffLines
-	}
-	return 120
+	return g.cfg.Context.Caps.GitDiffLines
 }
 
 func truncateRepairLines(lines []string, cap int) string {

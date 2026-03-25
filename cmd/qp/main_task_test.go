@@ -62,6 +62,36 @@ aliases:
 	}
 }
 
+func TestRunFindsConfigInParentDirectory(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "qp.yaml"), []byte(`
+tasks:
+  test:
+    desc: Run tests
+    cmd: printf ok
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	subdir := filepath.Join(dir, "nested", "child")
+	if err := os.MkdirAll(subdir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	restore := chdirForTest(t, subdir)
+	defer restore()
+
+	stdout, readStdout := tempOutputFile(t)
+	stderr, readStderr := tempOutputFile(t)
+
+	code := run([]string{"test"}, stdout, stderr)
+	if code != 0 {
+		t.Fatalf("run(test) code = %d, want 0; stderr=%s", code, readStderr())
+	}
+	if !strings.Contains(readStdout(), "ok") {
+		t.Fatalf("stdout = %q, want task output", readStdout())
+	}
+}
+
 func TestRunTaskAcceptsDirectParamFlag(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "qp.yaml"), []byte(`

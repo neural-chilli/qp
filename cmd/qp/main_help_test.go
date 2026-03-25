@@ -60,7 +60,7 @@ func TestRunHelpForTask(t *testing.T) {
 	if !strings.Contains(output, "Usage: qp check [--dry-run] [--no-cache] [--allow-unsafe] [--events] [--json]") {
 		t.Fatalf("stdout = %q, want usage", output)
 	}
-	if !strings.Contains(output, "Steps:\n- test\n- build") {
+	if !strings.Contains(output, "Steps:\n- test\n- vet\n- build") {
 		t.Fatalf("stdout = %q, want steps", output)
 	}
 }
@@ -77,7 +77,7 @@ func TestRunUnknownTaskShowsSuggestion(t *testing.T) {
 	if code == 0 {
 		t.Fatal("run(chek) code = 0, want failure")
 	}
-	if !strings.Contains(readStderr(), `unknown task "chek". Did you mean: check?`) {
+	if !strings.Contains(readStderr(), `unknown task "chek". Did you mean: check`) {
 		t.Fatalf("stderr = %q, want suggestion", readStderr())
 	}
 }

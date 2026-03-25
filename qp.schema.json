@@ -10,6 +10,21 @@
     "project": { "type": "string", "description": "Short repository or project name shown in generated docs and context output." },
     "description": { "type": "string", "description": "Human-readable summary of what this repository contains or does." },
     "default": { "type": "string", "description": "Task or alias to run when `qp` is invoked without an explicit task name." },
+    "vars": {
+      "type": "object",
+      "description": "Top-level string variables available to interpolation and CEL contexts.",
+      "additionalProperties": { "type": "string" }
+    },
+    "templates": {
+      "type": "object",
+      "description": "Reusable template snippets available as `{{template.<name>}}`.",
+      "additionalProperties": { "type": "string" }
+    },
+    "profiles": {
+      "type": "object",
+      "description": "Named overlays for task behavior and variables, selected via `QP_PROFILE`.",
+      "additionalProperties": { "$ref": "#/$defs/profile" }
+    },
     "env_file": { "type": "string", "description": "Optional `.env`-style file to load before task execution." },
     "defaults": { "$ref": "#/$defs/defaults", "description": "Global defaults inherited by tasks unless they override them." },
     "tasks": {
@@ -46,6 +61,7 @@
     "agent": { "$ref": "#/$defs/agent", "description": "Agent-specific repo policy and knowledge-accrual settings." },
     "context": { "$ref": "#/$defs/context", "description": "Controls for generated context documents and bounded repo summaries." },
     "codemap": { "$ref": "#/$defs/codemap", "description": "Semantic explanations of important packages, conventions, and glossary terms." },
+    "architecture": { "$ref": "#/$defs/architecture", "description": "Optional architecture boundaries for `qp arch-check`." },
     "serve": { "$ref": "#/$defs/serve", "description": "Reserved transport settings for the dormant internal MCP implementation." },
     "watch": { "$ref": "#/$defs/watch", "description": "Defaults for rerunning tasks or guards when repo files change." }
   },
@@ -69,6 +85,7 @@
           "items": { "type": "string" },
           "minItems": 1
         },
+        "run": { "type": "string", "description": "DAG-style run expression such as `a -> par(b, c)` or `when(expr, a, b)`." },
         "needs": {
           "type": "array",
           "description": "Task dependencies that must run successfully before the task itself starts.",
@@ -110,8 +127,38 @@
       "required": ["desc"],
       "oneOf": [
         { "required": ["cmd"] },
-        { "required": ["steps"] }
+        { "required": ["steps"] },
+        { "required": ["run"] }
       ]
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "vars": {
+          "type": "object",
+          "description": "Profile-level variable overrides merged onto top-level `vars`.",
+          "additionalProperties": { "type": "string" }
+        },
+        "tasks": {
+          "type": "object",
+          "description": "Per-task profile overrides for `when`, `timeout`, and `env`.",
+          "additionalProperties": { "$ref": "#/$defs/profileTask" }
+        }
+      }
+    },
+    "profileTask": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "when": { "type": "string", "description": "Profile-specific `when` expression override for the task." },
+        "timeout": { "type": "string", "description": "Profile-specific timeout override." },
+        "env": {
+          "type": "object",
+          "description": "Profile-specific task environment variable overrides.",
+          "additionalProperties": { "type": "string" }
+        }
+      }
     },
     "param": {
       "type": "object",
@@ -286,6 +333,49 @@
           "description": "Other packages or subsystems this package relies on conceptually.",
           "items": { "type": "string" }
         }
+      }
+    },
+    "architecture": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "layers": {
+          "type": "array",
+          "description": "Global ordered layer names used by direction checks.",
+          "items": { "type": "string" }
+        },
+        "domains": {
+          "type": "object",
+          "description": "Named architecture domains with roots and allowed layers.",
+          "additionalProperties": { "$ref": "#/$defs/architectureDomain" }
+        },
+        "rules": {
+          "type": "array",
+          "description": "Architecture rule list enforced by `qp arch-check`.",
+          "items": { "$ref": "#/$defs/architectureRule" }
+        }
+      }
+    },
+    "architectureDomain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root"],
+      "properties": {
+        "root": { "type": "string", "description": "Repo-relative root directory for the domain." },
+        "layers": {
+          "type": "array",
+          "description": "Allowed layer names within the domain.",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "architectureRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "direction": { "type": "string", "enum": ["forward"], "description": "Layer-direction policy." },
+        "cross_domain": { "type": "string", "enum": ["allow", "deny"], "description": "Cross-domain import policy." },
+        "cross_cutting": { "type": "string", "description": "Layer name allowed as cross-domain boundary." }
       }
     },
     "serve": {

@@ -24,6 +24,11 @@ func TestSchemaParsesAndIncludesCoreFields(t *testing.T) {
 	if _, ok := properties["tasks"]; !ok {
 		t.Fatalf("schema.properties = %#v, want tasks field", properties)
 	}
+	for _, key := range []string{"vars", "templates", "profiles"} {
+		if _, ok := properties[key]; !ok {
+			t.Fatalf("schema.properties = %#v, want %s field", properties, key)
+		}
+	}
 
 	defs, ok := schema["$defs"].(map[string]any)
 	if !ok {
@@ -39,5 +44,8 @@ func TestSchemaParsesAndIncludesCoreFields(t *testing.T) {
 	}
 	if _, ok := taskProps["safety"]; !ok {
 		t.Fatalf("task.properties = %#v, want safety field", taskProps)
+	}
+	if _, ok := taskProps["run"]; !ok {
+		t.Fatalf("task.properties = %#v, want run field", taskProps)
 	}
 }

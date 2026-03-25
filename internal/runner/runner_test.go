@@ -631,6 +631,29 @@ func TestRunCmdTaskExtractsGenericErrors(t *testing.T) {
 	}
 }
 
+func TestRunCmdTaskFallsBackToGenericErrorParsing(t *testing.T) {
+	t.Parallel()
+
+	r := newTestRunner(t, map[string]config.Task{
+		"lint": {
+			Desc:        "lint",
+			Cmd:         `printf '%s\n' 'src/app.ts:12:7: missing semicolon' >&2; exit 1`,
+			ErrorFormat: "go_test",
+		},
+	})
+
+	result, err := r.Run("lint", Options{Stdout: io.Discard, Stderr: io.Discard})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if len(result.Errors) != 1 {
+		t.Fatalf("len(Errors) = %d, want 1", len(result.Errors))
+	}
+	if got := result.Errors[0]; got.File != "src/app.ts" || got.Line != 12 || got.Column != 7 || got.Message != "missing semicolon" || got.Severity != "error" {
+		t.Fatalf("Errors[0] = %+v, want parsed generic fallback error", got)
+	}
+}
+
 func TestRunPipelineStepIncludesStructuredErrors(t *testing.T) {
 	t.Parallel()
 

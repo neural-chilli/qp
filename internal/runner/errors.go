@@ -18,20 +18,25 @@ func extractErrors(format, stderr string) []ErrorEntry {
 	if stderr == "" || format == "" {
 		return nil
 	}
+	var parsed []ErrorEntry
 	switch format {
 	case "go_test":
-		return parseGoTestErrors(stderr)
+		parsed = parseGoTestErrors(stderr)
 	case "pytest":
-		return parsePytestErrors(stderr)
+		parsed = parsePytestErrors(stderr)
 	case "tsc":
-		return parseTscErrors(stderr)
+		parsed = parseTscErrors(stderr)
 	case "eslint":
-		return parseEslintErrors(stderr)
+		parsed = parseEslintErrors(stderr)
 	case "generic":
 		return parseGenericErrors(stderr)
 	default:
 		return nil
 	}
+	if len(parsed) == 0 {
+		return parseGenericErrors(stderr)
+	}
+	return parsed
 }
 
 func parseGoTestErrors(stderr string) []ErrorEntry {

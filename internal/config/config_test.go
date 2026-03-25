@@ -32,8 +32,8 @@ tasks:
 	if cfg.Serve.Port != 8080 {
 		t.Fatalf("Serve.Port = %d, want 8080", cfg.Serve.Port)
 	}
-	if cfg.Serve.TokenEnv != "FKN_MCP_TOKEN" {
-		t.Fatalf("Serve.TokenEnv = %q, want FKN_MCP_TOKEN", cfg.Serve.TokenEnv)
+	if cfg.Serve.TokenEnv != "QP_MCP_TOKEN" {
+		t.Fatalf("Serve.TokenEnv = %q, want QP_MCP_TOKEN", cfg.Serve.TokenEnv)
 	}
 	if cfg.Watch.DebounceMS != 500 {
 		t.Fatalf("Watch.DebounceMS = %d, want 500", cfg.Watch.DebounceMS)

@@ -2,15 +2,12 @@ package cel
 
 import (
 	"fmt"
-	"regexp"
 	"sort"
-	"strings"
 
 	celgo "github.com/google/cel-go/cel"
+	"github.com/google/cel-go/common/types"
+	"github.com/google/cel-go/common/types/ref"
 )
-
-var identPattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
-var envCallPattern = regexp.MustCompile(`env\(\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*\)`)
 
 type Engine struct{}
 
@@ -19,15 +16,7 @@ func New() *Engine {
 }
 
 func (e *Engine) Eval(expression string, vars map[string]any) (any, error) {
-	expression = normalizeExpression(expression)
-	envOpts := make([]celgo.EnvOption, 0, len(vars))
-	for _, name := range sortedNames(vars) {
-		if !identPattern.MatchString(name) {
-			continue
-		}
-		envOpts = append(envOpts, celgo.Variable(name, celgo.DynType))
-	}
-	env, err := celgo.NewEnv(envOpts...)
+	env, err := e.newEnv(vars)
 	if err != nil {
 		return nil, err
 	}
@@ -53,8 +42,7 @@ func (e *Engine) Eval(expression string, vars map[string]any) (any, error) {
 }
 
 func (e *Engine) Validate(expression string) error {
-	expression = normalizeExpression(expression)
-	env, err := celgo.NewEnv()
+	env, err := e.newEnv(nil)
 	if err != nil {
 		return err
 	}
@@ -86,8 +74,62 @@ func sortedNames(vars map[string]any) []string {
 	return names
 }
 
-func normalizeExpression(expression string) string {
-	expression = strings.ReplaceAll(expression, "branch()", "branch")
-	expression = envCallPattern.ReplaceAllString(expression, `("$1" in env ? env["$1"] : "")`)
-	return expression
+func (e *Engine) newEnv(vars map[string]any) (*celgo.Env, error) {
+	envOpts := make([]celgo.EnvOption, 0, len(vars)+2)
+	for _, name := range sortedNames(vars) {
+		envOpts = append(envOpts, celgo.Variable(name, celgo.DynType))
+	}
+	envOpts = append(envOpts,
+		celgo.Function("branch",
+			celgo.Overload(
+				"qp_branch_no_args",
+				[]*celgo.Type{},
+				celgo.StringType,
+				celgo.FunctionBinding(func(args ...ref.Val) ref.Val {
+					return types.String(branchValue(vars))
+				}),
+			),
+		),
+		celgo.Function("env",
+			celgo.Overload(
+				"qp_env_lookup",
+				[]*celgo.Type{celgo.StringType},
+				celgo.StringType,
+				celgo.UnaryBinding(func(arg ref.Val) ref.Val {
+					return types.String(envValue(vars, fmt.Sprint(arg.Value())))
+				}),
+			),
+		),
+	)
+	return celgo.NewEnv(envOpts...)
+}
+
+func branchValue(vars map[string]any) string {
+	if vars == nil {
+		return ""
+	}
+	value, ok := vars["branch"]
+	if !ok || value == nil {
+		return ""
+	}
+	return fmt.Sprint(value)
+}
+
+func envValue(vars map[string]any, key string) string {
+	if vars == nil {
+		return ""
+	}
+	value, ok := vars["env"]
+	if !ok || value == nil {
+		return ""
+	}
+	switch typed := value.(type) {
+	case map[string]string:
+		return typed[key]
+	case map[string]any:
+		if found, ok := typed[key]; ok && found != nil {
+			return fmt.Sprint(found)
+		}
+	}
+	return ""
 }

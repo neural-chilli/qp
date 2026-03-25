@@ -53,3 +53,37 @@ func TestEvalReturnsParseErrors(t *testing.T) {
 		t.Fatal("Eval() error = nil, want parse error")
 	}
 }
+
+func TestEvalSupportsBranchFunctionWithoutStringRewrite(t *testing.T) {
+	t.Parallel()
+
+	engine := New()
+	value, err := engine.Eval(`branch() == "main" && "branch()" == "branch()"`, map[string]any{
+		"branch": "main",
+	})
+	if err != nil {
+		t.Fatalf("Eval() error = %v", err)
+	}
+	boolean, ok := value.(bool)
+	if !ok || !boolean {
+		t.Fatalf("Eval() = %#v, want true", value)
+	}
+}
+
+func TestEvalSupportsEnvFunctionWithoutStringRewrite(t *testing.T) {
+	t.Parallel()
+
+	engine := New()
+	value, err := engine.Eval(`env("MODE") == "prod" && "env(\"MODE\")" == "env(\"MODE\")"`, map[string]any{
+		"env": map[string]string{
+			"MODE": "prod",
+		},
+	})
+	if err != nil {
+		t.Fatalf("Eval() error = %v", err)
+	}
+	boolean, ok := value.(bool)
+	if !ok || !boolean {
+		t.Fatalf("Eval() = %#v, want true", value)
+	}
+}

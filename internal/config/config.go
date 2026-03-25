@@ -325,7 +325,7 @@ func (c *Config) applyDefaults() {
 		c.Serve.Port = 8080
 	}
 	if c.Serve.TokenEnv == "" {
-		c.Serve.TokenEnv = "FKN_MCP_TOKEN"
+		c.Serve.TokenEnv = "QP_MCP_TOKEN"
 	}
 	if c.Watch.DebounceMS == 0 {
 		c.Watch.DebounceMS = 500

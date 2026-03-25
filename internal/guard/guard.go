@@ -79,31 +79,24 @@ func (r *Runner) Run(name string, opts runner.Options) (Report, error) {
 	}
 
 	for i, stepName := range guardCfg.Steps {
-		stepResult, err := r.tasks.RunGuardStep(stepName, opts)
+		result, err := r.tasks.Run(stepName, opts)
 		if err != nil {
 			return Report{}, err
 		}
-		stepResult.Index = i
-
-		stderr := ""
-		if stepResult.Stderr != nil {
-			stderr = *stepResult.Stderr
-		}
-
-		duration := int64(0)
-		if stepResult.DurationMS != nil {
-			duration = *stepResult.DurationMS
+		stderr := result.Stderr
+		if stderr == "" {
+			stderr = nestedStepsStderr(result.Steps)
 		}
 
 		reportStep := GuardStep{
 			Index:       i,
 			Name:        stepName,
-			ResolvedCmd: stepResult.ResolvedCmd,
-			Status:      stepResult.Status,
-			ExitCode:    stepResult.ExitCode,
+			ResolvedCmd: result.ResolvedCmd,
+			Status:      result.Status,
+			ExitCode:    result.ExitCode,
 			Stderr:      stderr,
-			Errors:      stepResult.Errors,
-			DurationMS:  duration,
+			Errors:      collectResultErrors(result),
+			DurationMS:  result.DurationMS,
 		}
 		report.Steps = append(report.Steps, reportStep)
 
@@ -121,6 +114,42 @@ func (r *Runner) Run(name string, opts runner.Options) (Report, error) {
 	}
 
 	return report, nil
+}
+
+func nestedStepsStderr(steps []runner.StepResult) string {
+	var combined string
+	for _, step := range steps {
+		if step.Stderr != nil && *step.Stderr != "" {
+			combined += *step.Stderr
+		}
+		if nested := nestedStepsStderr(step.Steps); nested != "" {
+			combined += nested
+		}
+	}
+	return combined
+}
+
+func collectResultErrors(result runner.Result) []runner.ErrorEntry {
+	if len(result.Errors) > 0 {
+		return append([]runner.ErrorEntry(nil), result.Errors...)
+	}
+	errors := collectStepErrors(result.Steps)
+	if len(errors) == 0 {
+		return nil
+	}
+	return errors
+}
+
+func collectStepErrors(steps []runner.StepResult) []runner.ErrorEntry {
+	var errors []runner.ErrorEntry
+	for _, step := range steps {
+		if len(step.Errors) > 0 {
+			errors = append(errors, step.Errors...)
+			continue
+		}
+		errors = append(errors, collectStepErrors(step.Steps)...)
+	}
+	return errors
 }
 
 func (r *Runner) writeCache(report Report) error {

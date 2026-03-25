@@ -15,6 +15,12 @@ tasks:
     cmd: go test ./...
     safety: idempotent
 
+  vet:
+    desc: Run go vet
+    scope: cli
+    cmd: go vet ./...
+    safety: idempotent
+
   build:
     desc: Build the qp binary
     scope: cli
@@ -28,6 +34,7 @@ tasks:
       - fmt
     steps:
       - test
+      - vet
       - build
     safety: idempotent
 
@@ -37,6 +44,7 @@ groups:
     tasks:
       - fmt
       - test
+      - vet
       - build
       - check
 
@@ -44,6 +52,7 @@ guards:
   default:
     steps:
       - test
+      - vet
       - build
 
 scopes:
@@ -123,7 +132,6 @@ codemap:
         - StepResult
       entry_points:
         - Runner.Run
-        - Runner.RunGuardStep
       conventions:
         - All command execution flows through runCommand
       depends_on:

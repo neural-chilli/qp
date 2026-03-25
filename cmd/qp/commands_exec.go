@@ -314,7 +314,11 @@ func runTask(args []string, stdout, stderr *os.File) int {
 }
 
 func loadConfig() (*config.Config, string, error) {
-	repoRoot, err := os.Getwd()
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, "", err
+	}
+	repoRoot, err := findRepoRoot(cwd)
 	if err != nil {
 		return nil, "", err
 	}
@@ -328,6 +332,21 @@ func loadConfig() (*config.Config, string, error) {
 		return nil, "", err
 	}
 	return cfg, repoRoot, nil
+}
+
+func findRepoRoot(start string) (string, error) {
+	current := start
+	for {
+		cfgPath := filepath.Join(current, "qp.yaml")
+		if _, err := os.Stat(cfgPath); err == nil {
+			return current, nil
+		}
+		parent := filepath.Dir(current)
+		if parent == current {
+			return "", fmt.Errorf("missing qp.yaml in %s or any parent directory; run `qp init` to scaffold one", start)
+		}
+		current = parent
+	}
 }
 
 func runRepair(args []string, stdout, stderr *os.File) int {

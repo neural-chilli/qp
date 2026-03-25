@@ -272,37 +272,6 @@ func (r *Runner) runTask(ctx context.Context, taskName string, opts Options) (Re
 	return result, err
 }
 
-func (r *Runner) RunGuardStep(stepName string, opts Options) (StepResult, error) {
-	result, err := r.runTask(context.Background(), stepName, opts)
-	if err != nil {
-		return StepResult{}, err
-	}
-	stderr := result.Stderr
-	if stderr == "" && len(result.Steps) > 0 {
-		stderr = nestedStepsStderr(result.Steps)
-	}
-
-	duration := result.DurationMS
-	started := result.StartedAt
-	finished := result.FinishedAt
-	return StepResult{
-		Index:       0,
-		Name:        stepName,
-		Type:        result.Type,
-		ResolvedCmd: result.ResolvedCmd,
-		Parallel:    result.Parallel,
-		Status:      result.Status,
-		ExitCode:    result.ExitCode,
-		Stderr:      strPtr(stderr),
-		Errors:      collectResultErrors(result),
-		SkipReason:  result.SkipReason,
-		DurationMS:  &duration,
-		StartedAt:   &started,
-		FinishedAt:  &finished,
-		Steps:       append([]StepResult(nil), result.Steps...),
-	}, nil
-}
-
 func (r *Runner) celVars(opts Options) map[string]any {
 	env := map[string]string{}
 	for _, pair := range os.Environ() {
