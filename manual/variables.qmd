@@ -1,0 +1,134 @@
+---
+title: "Variables"
+---
+
+Variables (`vars`) let you centralize reusable values and keep task commands readable. They are especially useful when the same values are needed across many tasks, profiles, or templates.
+
+## Variable Types
+
+`qp` supports two styles:
+
+1. Static value
+2. Shell-resolved value (`sh`)
+
+```yaml
+vars:
+  region: eu-west-1
+  service: payments-api
+  git_sha:
+    sh: git rev-parse --short HEAD
+```
+
+Use static vars for stable defaults and `sh` vars for dynamic repo context.
+
+## Using Variables In Tasks
+
+Variables are referenced as `{{vars.<name>}}`.
+
+```yaml
+tasks:
+  build:
+    desc: Build service image
+    cmd: docker build -t ghcr.io/acme/{{vars.service}}:{{vars.git_sha}} .
+
+  deploy:
+    desc: Deploy image to a region
+    cmd: ./scripts/deploy.sh --region {{vars.region}} --image ghcr.io/acme/{{vars.service}}:{{vars.git_sha}}
+```
+
+```bash
+qp build
+qp deploy
+```
+
+## Overrides From Environment: `QP_VAR_*`
+
+Any variable can be overridden at runtime with environment variables prefixed by `QP_VAR_`.
+
+```bash
+QP_VAR_REGION=us-east-1 qp deploy
+QP_VAR_SERVICE=payments-worker qp build
+```
+
+`QP_VAR_REGION` overrides `vars.region`, `QP_VAR_SERVICE` overrides `vars.service`, and so on.
+
+## Overrides From CLI: `--var name=value`
+
+CLI overrides are explicit and script-friendly.
+
+```bash
+qp deploy --var region=us-east-1
+qp build --var service=payments-worker --var git_sha=v2.4.1
+```
+
+## Precedence
+
+Variable resolution order is:
+
+1. `--var name=value` (highest)
+2. `QP_VAR_NAME` environment override
+3. `vars` in `qp.yaml` (including `sh`)
+
+This means CLI flags always win for one-off runs.
+
+## Worked Precedence Example
+
+```yaml
+vars:
+  region: eu-west-1
+
+tasks:
+  show-region:
+    desc: Print resolved region
+    cmd: echo {{vars.region}}
+```
+
+```bash
+qp show-region
+# eu-west-1
+
+QP_VAR_REGION=us-east-1 qp show-region
+# us-east-1
+
+QP_VAR_REGION=us-east-1 qp show-region --var region=ap-southeast-2
+# ap-southeast-2
+```
+
+## Variables In Expressions
+
+Vars can be used in CEL expressions through `vars`.
+
+```yaml
+tasks:
+  deploy:
+    desc: Deploy only in approved region
+    cmd: ./scripts/deploy.sh
+    when: vars.region == "eu-west-1" || vars.region == "us-east-1"
+```
+
+This pattern helps encode guardrails in config instead of shell logic.
+
+## Variables In Task `env`
+
+You can map variable values into environment variables for tools that expect env-based configuration.
+
+```yaml
+tasks:
+  smoke:
+    desc: Smoke test against selected region
+    cmd: ./scripts/smoke.sh
+    env:
+      AWS_REGION: "{{vars.region}}"
+      SERVICE_NAME: "{{vars.service}}"
+```
+
+## Practical Patterns
+
+1. Put repo-wide defaults in `vars`.
+2. Use profiles for environment bundles (staging/prod).
+3. Keep CI explicit by passing `--var` in pipeline scripts.
+4. Use `QP_VAR_*` for local experimentation without editing `qp.yaml`.
+
+## Next Step
+
+To avoid repeating command fragments and generate repeated task families, continue to [Templates](templates.qmd).

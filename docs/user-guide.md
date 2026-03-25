@@ -78,6 +78,7 @@ If you prefer a browsable multi-page manual with search, left navigation, and ri
 - [Guards](../manual/guards.qmd)
 - [Groups and aliases](../manual/groups-and-aliases.qmd)
 - [Scopes](../manual/scopes.qmd)
+- [Variables](../manual/variables.qmd)
 
 ## Windows Daemon Mode
 

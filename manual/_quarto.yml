@@ -33,6 +33,7 @@ website:
           - guards.qmd
           - groups-and-aliases.qmd
           - scopes.qmd
+          - variables.qmd
           - tasks-and-params.qmd
           - dags.qmd
           - expressions.qmd
