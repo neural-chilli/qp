@@ -123,8 +123,6 @@ The goal is not to guess everything perfectly. The goal is to give you a believa
 
 Treat `init --from-repo` as a strong starting point, not a source of truth. Import heuristics are intentionally best-effort and should be reviewed before you rely on the generated config.
 
-For a rollout checklist on adopting `qp` across multiple public repos, see [docs/public-adoption.md](public-adoption.md).
-
 If you also want repo-specific human and agent docs generated from `qp.yaml`:
 
 ```bash
