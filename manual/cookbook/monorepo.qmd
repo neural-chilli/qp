@@ -2,26 +2,89 @@
 title: "Cookbook: Monorepo Scopes"
 ---
 
+This recipe helps large repos run only the checks that matter per subsystem while keeping one shared task contract.
+
+## Scenario
+
+You have backend and frontend code in one repository and want focused checks plus an aggregate gate.
+
+## `qp.yaml` Recipe
+
 ```yaml
 scopes:
   api:
-    desc: API service
-    paths: ["services/api/", "internal/api/"]
-
+    desc: Go API and domain logic
+    paths: [services/api/, internal/api/]
   web:
-    desc: Web app
-    paths: ["apps/web/"]
+    desc: Frontend app and assets
+    paths: [apps/web/]
 
 tasks:
-  api-test:
-    desc: API tests
-    cmd: go test ./services/api/...
+  api-lint:
+    desc: Lint API code
+    cmd: golangci-lint run ./services/api/... ./internal/api/...
     scope: api
 
+  api-test:
+    desc: Test API
+    cmd: go test ./services/api/... ./internal/api/...
+    scope: api
+
+  web-lint:
+    desc: Lint web app
+    cmd: npm run lint --prefix apps/web
+    scope: web
+
   web-test:
-    desc: Web tests
+    desc: Test web app
     cmd: npm test --prefix apps/web
     scope: web
+
+  check-api:
+    desc: API quality gate
+    steps: [api-lint, api-test]
+    scope: api
+
+  check-web:
+    desc: Web quality gate
+    steps: [web-lint, web-test]
+    scope: web
+
+  check:
+    desc: Full monorepo verification
+    run: par(check-api, check-web)
+
+guards:
+  ci:
+    steps: [check]
 ```
 
-Use `qp plan` / `qp diff-plan` to focus checks by changed files.
+## Practical Workflows
+
+Work on backend only:
+
+```bash
+qp check-api
+```
+
+Run full repo gate:
+
+```bash
+qp check
+qp guard ci --json
+```
+
+## Planning by Changed Files
+
+```bash
+qp diff-plan
+qp agent-brief --diff --max-tokens 2500
+```
+
+With scopes in place, planning output naturally points at the right task family.
+
+## Why This Scales
+
+1. Fast subsystem checks during feature work.
+2. One aggregate command for CI and release readiness.
+3. Scope metadata improves agent/handoff precision.
