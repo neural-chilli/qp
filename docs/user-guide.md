@@ -100,6 +100,7 @@ If you prefer a browsable multi-page manual with search, left navigation, and ri
 - [Cookbook: Python project](../manual/cookbook/python-project.qmd)
 - [Cookbook: Rust workspace](../manual/cookbook/rust-workspace.qmd)
 - [Cookbook: Java + Gradle](../manual/cookbook/java-gradle.qmd)
+- [Cookbook: Agent workflow](../manual/cookbook/agent-workflow.qmd)
 
 ## Windows Daemon Mode
 

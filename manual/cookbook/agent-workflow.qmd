@@ -1,0 +1,93 @@
+---
+title: "Cookbook: Agent Workflow"
+---
+
+This recipe shows a practical human+agent loop using `qp` planning, context, validation, and repair.
+
+## Scenario
+
+You want agents to make bounded changes with repeatable verification and clear handoff artifacts.
+
+## `qp.yaml` Recipe
+
+```yaml
+project: agent-ready-repo
+default: check
+
+scopes:
+  backend:
+    desc: Core API + domain logic
+    paths: [cmd/api/, internal/]
+
+tasks:
+  lint:
+    desc: Lint Go source
+    cmd: golangci-lint run
+    scope: backend
+  test:
+    desc: Run tests
+    cmd: go test ./...
+    scope: backend
+  check:
+    desc: Main verification command
+    steps: [lint, test]
+    scope: backend
+
+guards:
+  ci:
+    steps: [check]
+
+agent:
+  accrue_knowledge: true
+```
+
+## Human Loop
+
+1. Stage or edit files.
+2. Generate a targeted plan:
+
+```bash
+qp diff-plan
+```
+
+3. Generate agent handoff:
+
+```bash
+qp agent-brief --diff --max-tokens 2500
+qp context --agent --task check --max-tokens 3000
+```
+
+4. Ask agent to implement within scope and run verification command.
+5. If checks fail, run:
+
+```bash
+qp repair ci --brief
+```
+
+## Prompt Template
+
+```text
+Use the backend scope only.
+Implement the requested change.
+Run qp check --json.
+If it fails, include qp repair ci --brief output and propose next fix.
+Summarize changed files and behavior impact.
+```
+
+## Why This Works
+
+1. Scope constraints keep edits bounded.
+2. `agent-brief` and `context` reduce prompt ambiguity.
+3. `check` and `guard` keep verification deterministic.
+4. `repair` gives structured follow-up context when failures occur.
+
+## CI Companion
+
+```yaml
+tasks:
+  ci:
+    desc: CI verification
+    cmd: qp guard ci --json
+```
+
+Now local and CI flows share the same contract agents are asked to run.

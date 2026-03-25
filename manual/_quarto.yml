@@ -65,6 +65,7 @@ website:
           - cookbook/python-project.qmd
           - cookbook/rust-workspace.qmd
           - cookbook/java-gradle.qmd
+          - cookbook/agent-workflow.qmd
 
 format:
   html:
