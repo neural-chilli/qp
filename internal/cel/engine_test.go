@@ -1,6 +1,10 @@
 package cel
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
 
 func TestEvalBoolReturnsTrue(t *testing.T) {
 	t.Parallel()
@@ -94,6 +98,61 @@ func TestEvalSupportsProfileFunction(t *testing.T) {
 	engine := New()
 	value, err := engine.Eval(`profile() == "prod"`, map[string]any{
 		"profile": "prod",
+	})
+	if err != nil {
+		t.Fatalf("Eval() error = %v", err)
+	}
+	boolean, ok := value.(bool)
+	if !ok || !boolean {
+		t.Fatalf("Eval() = %#v, want true", value)
+	}
+}
+
+func TestEvalSupportsTagFunction(t *testing.T) {
+	t.Parallel()
+
+	engine := New()
+	value, err := engine.Eval(`tag() == "v1.2.3"`, map[string]any{
+		"tag": "v1.2.3",
+	})
+	if err != nil {
+		t.Fatalf("Eval() error = %v", err)
+	}
+	boolean, ok := value.(bool)
+	if !ok || !boolean {
+		t.Fatalf("Eval() = %#v, want true", value)
+	}
+}
+
+func TestEvalSupportsParamAndHasParamFunctions(t *testing.T) {
+	t.Parallel()
+
+	engine := New()
+	value, err := engine.Eval(`param("region") == "eu-west-1" && has_param("region") && !has_param("missing")`, map[string]any{
+		"params": map[string]string{
+			"region": "eu-west-1",
+		},
+	})
+	if err != nil {
+		t.Fatalf("Eval() error = %v", err)
+	}
+	boolean, ok := value.(bool)
+	if !ok || !boolean {
+		t.Fatalf("Eval() = %#v, want true", value)
+	}
+}
+
+func TestEvalSupportsFileExistsFunction(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "marker.txt"), []byte("ok"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	engine := New()
+	value, err := engine.Eval(`file_exists("marker.txt") && !file_exists("missing.txt")`, map[string]any{
+		"repo_root": dir,
 	})
 	if err != nil {
 		t.Fatalf("Eval() error = %v", err)

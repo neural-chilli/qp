@@ -751,6 +751,29 @@ func TestRunTaskWhenCanUseProfileFunction(t *testing.T) {
 	}
 }
 
+func TestRunTaskWhenCanUseParamFunctions(t *testing.T) {
+	t.Parallel()
+
+	repoRoot := t.TempDir()
+	r := New(&config.Config{
+		Tasks: map[string]config.Task{
+			"deploy": {
+				Desc: "deploy",
+				Cmd:  "echo deploy",
+				When: `has_param("region") && param("region") == "eu-west-1"`,
+			},
+		},
+	}, repoRoot)
+
+	result, err := r.Run("deploy", Options{Stdout: io.Discard, Stderr: io.Discard, Params: map[string]string{"region": "eu-west-1"}})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if result.Status != StatusPass {
+		t.Fatalf("Status = %q, want pass", result.Status)
+	}
+}
+
 func TestRunCmdTaskDirOverridesDefaultWorkingDir(t *testing.T) {
 	t.Parallel()
 

@@ -44,6 +44,7 @@ type Runner struct {
 	envFileCount int
 	envFileFound bool
 	branch       string
+	tag          string
 	celEngine    *celpkg.Engine
 }
 
@@ -110,6 +111,7 @@ func New(cfg *config.Config, repoRoot string) *Runner {
 		envFileCount: envCount,
 		envFileFound: envFound,
 		branch:       detectGitBranch(repoRoot),
+		tag:          detectGitTag(repoRoot),
 		celEngine:    celpkg.New(),
 	}
 }
@@ -304,18 +306,30 @@ func (r *Runner) celVars(opts Options) map[string]any {
 		env[parts[0]] = parts[1]
 	}
 	return map[string]any{
-		"env":     env,
-		"branch":  r.branch,
-		"profile": os.Getenv("QP_PROFILE"),
-		"os":      runtime.GOOS,
-		"params":  opts.Params,
-		"vars":    map[string]string(r.cfg.Vars),
-		"var":     map[string]string(r.cfg.Vars),
+		"env":       env,
+		"branch":    r.branch,
+		"tag":       r.tag,
+		"profile":   os.Getenv("QP_PROFILE"),
+		"repo_root": r.repoRoot,
+		"os":        runtime.GOOS,
+		"params":    opts.Params,
+		"vars":      map[string]string(r.cfg.Vars),
+		"var":       map[string]string(r.cfg.Vars),
 	}
 }
 
 func detectGitBranch(repoRoot string) string {
 	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	cmd.Dir = repoRoot
+	out, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
+}
+
+func detectGitTag(repoRoot string) string {
+	cmd := exec.Command("git", "describe", "--tags", "--exact-match", "HEAD")
 	cmd.Dir = repoRoot
 	out, err := cmd.Output()
 	if err != nil {

@@ -2,7 +2,10 @@ package cel
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"sort"
+	"strings"
 
 	celgo "github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
@@ -110,6 +113,46 @@ func (e *Engine) newEnv(vars map[string]any) (*celgo.Env, error) {
 				}),
 			),
 		),
+		celgo.Function("tag",
+			celgo.Overload(
+				"qp_tag_no_args",
+				[]*celgo.Type{},
+				celgo.StringType,
+				celgo.FunctionBinding(func(args ...ref.Val) ref.Val {
+					return types.String(tagValue(vars))
+				}),
+			),
+		),
+		celgo.Function("param",
+			celgo.Overload(
+				"qp_param_lookup",
+				[]*celgo.Type{celgo.StringType},
+				celgo.StringType,
+				celgo.UnaryBinding(func(arg ref.Val) ref.Val {
+					return types.String(paramValue(vars, fmt.Sprint(arg.Value())))
+				}),
+			),
+		),
+		celgo.Function("has_param",
+			celgo.Overload(
+				"qp_has_param_lookup",
+				[]*celgo.Type{celgo.StringType},
+				celgo.BoolType,
+				celgo.UnaryBinding(func(arg ref.Val) ref.Val {
+					return types.Bool(hasParamValue(vars, fmt.Sprint(arg.Value())))
+				}),
+			),
+		),
+		celgo.Function("file_exists",
+			celgo.Overload(
+				"qp_file_exists_lookup",
+				[]*celgo.Type{celgo.StringType},
+				celgo.BoolType,
+				celgo.UnaryBinding(func(arg ref.Val) ref.Val {
+					return types.Bool(fileExistsValue(vars, fmt.Sprint(arg.Value())))
+				}),
+			),
+		),
 	)
 	return celgo.NewEnv(envOpts...)
 }
@@ -153,4 +196,70 @@ func profileValue(vars map[string]any) string {
 		return ""
 	}
 	return fmt.Sprint(value)
+}
+
+func tagValue(vars map[string]any) string {
+	if vars == nil {
+		return ""
+	}
+	value, ok := vars["tag"]
+	if !ok || value == nil {
+		return ""
+	}
+	return fmt.Sprint(value)
+}
+
+func paramValue(vars map[string]any, key string) string {
+	if vars == nil {
+		return ""
+	}
+	value, ok := vars["params"]
+	if !ok || value == nil {
+		return ""
+	}
+	switch typed := value.(type) {
+	case map[string]string:
+		return typed[key]
+	case map[string]any:
+		if found, ok := typed[key]; ok && found != nil {
+			return fmt.Sprint(found)
+		}
+	}
+	return ""
+}
+
+func hasParamValue(vars map[string]any, key string) bool {
+	if vars == nil {
+		return false
+	}
+	value, ok := vars["params"]
+	if !ok || value == nil {
+		return false
+	}
+	switch typed := value.(type) {
+	case map[string]string:
+		_, ok := typed[key]
+		return ok
+	case map[string]any:
+		_, ok := typed[key]
+		return ok
+	}
+	return false
+}
+
+func fileExistsValue(vars map[string]any, p string) bool {
+	if strings.TrimSpace(p) == "" {
+		return false
+	}
+	target := p
+	if vars != nil {
+		if root, ok := vars["repo_root"]; ok && root != nil {
+			rootPath := fmt.Sprint(root)
+			if rootPath != "" && !filepath.IsAbs(target) {
+				target = filepath.Join(rootPath, target)
+			}
+		}
+	}
+	_, err := os.Stat(target)
+	return err == nil
 }
