@@ -1,0 +1,87 @@
+---
+title: "Core Concepts"
+---
+
+`qp` works best when you treat `qp.yaml` as your repo's operational contract: tasks define what can run, and metadata (guards, scopes, vars, profiles, secrets, context) defines how safely and predictably it runs for both humans and agents.
+
+## Glossary
+
+| Concept | What it means | 3-line YAML example | Learn more |
+|---|---|---|---|
+| Task | A runnable unit of work (`cmd`, `steps`, or `run`). | `tasks:`<br>`  test:`<br>`    cmd: go test ./...` | [Tasks and Params](tasks-and-params.qmd) |
+| Guard | A named validation bundle that runs all steps and reports combined health. | `guards:`<br>`  ci:`<br>`    steps: [lint, test]` | [Getting Started](getting-started.qmd) |
+| Scope | A named set of paths used for context, planning, and focused workflows. | `scopes:`<br>`  backend:`<br>`    paths: ["cmd/**", "internal/**"]` | [Home](index.qmd) |
+| Group | A way to organize tasks in `qp list` and docs for discoverability. | `groups:`<br>`  quality:`<br>`    tasks: [lint, test]` | [Home](index.qmd) |
+| Alias | A short alternate name for a task. | `tasks:`<br>`  build:`<br>`    aliases: [b]` | [Tasks and Params](tasks-and-params.qmd) |
+| Variable | A reusable value available via `{{vars.name}}` and expression helpers. | `vars:`<br>`  region: eu-west-1`<br>`  image: app:latest` | [Vars, Templates, Profiles, Secrets](vars-templates-profiles-secrets.qmd) |
+| Template | Reusable snippets or parameterized task blueprints expanded at load time. | `templates:`<br>`  build_cmd: go build ./...`<br>`  # used as {{template.build_cmd}}` | [Vars, Templates, Profiles, Secrets](vars-templates-profiles-secrets.qmd) |
+| Profile | An environment overlay selected by `QP_PROFILE` or `--profile`. | `profiles:`<br>`  prod:`<br>`    vars: { region: us-east-1 }` | [Vars, Templates, Profiles, Secrets](vars-templates-profiles-secrets.qmd) |
+| Secret | A value loaded from env/file and redacted from output/events/cache. | `secrets:`<br>`  api_key:`<br>`    from: env` | [Vars, Templates, Profiles, Secrets](vars-templates-profiles-secrets.qmd) |
+| Codemap | Semantic project metadata for conventions, domains, and architecture intent. | `codemap:`<br>`  layers: [api, service, data]`<br>`  glossary: []` | [Home](index.qmd) |
+| Context | A bounded repository briefing for agent or human handoff. | `context:`<br>`  default_mode: agent`<br>`  max_tokens: 4000` | [Home](index.qmd) |
+| Plan | A pre-edit execution/intention summary of work likely to change. | `tasks:`<br>`  plan:`<br>`    cmd: qp plan --json` | [Events and JSON Output](events-json.qmd) |
+| Repair | A diagnostic workflow that turns failed checks into actionable guidance. | `tasks:`<br>`  repair:`<br>`    cmd: qp repair` | [Events and JSON Output](events-json.qmd) |
+
+## How The Concepts Fit Together
+
+A realistic `qp` loop usually looks like this:
+
+1. Define **tasks** and group them with **aliases/groups** so `qp list` and `qp help` stay understandable.
+2. Add **vars**, **templates**, **profiles**, and **secrets** to keep command definitions clean and environment-specific.
+3. Use **run expressions** and/or pipeline steps to compose tasks into a deterministic workflow.
+4. Capture quality gates with **guards** and feed structured output to CI with `--json` and `--events`.
+5. Use **scopes**, **context**, **codemap**, **plan**, and **repair** to make agent-assisted change loops reliable.
+
+### End-to-end mini example
+
+```yaml
+project: payments
+default: check
+
+vars:
+  image: ghcr.io/acme/payments:{{vars.git_sha}}
+  git_sha:
+    sh: git rev-parse --short HEAD
+
+profiles:
+  prod:
+    vars:
+      image: ghcr.io/acme/payments:stable
+
+tasks:
+  lint:
+    desc: Lint Go code
+    cmd: golangci-lint run
+
+  test:
+    desc: Run tests
+    cmd: go test ./...
+
+  build:
+    desc: Build container
+    cmd: docker build -t {{vars.image}} .
+
+  check:
+    desc: Local quality gate
+    run: par(lint, test) -> build
+```
+
+```bash
+qp check
+QP_PROFILE=prod qp check --json
+```
+
+The first run uses repo-derived vars; the second overlays production values and emits machine-readable output.
+
+## Status And Exit Code Contract
+
+`qp` reports a task/guard status and uses process exit codes that scripts and CI can rely on.
+
+| Status | Meaning | Typical exit code |
+|---|---|---|
+| `pass` | Task/guard completed successfully. | `0` |
+| `fail` | Command error, validation failure, or unmet condition that marks failure. | non-zero from command (commonly `1`) |
+| `cancelled` | Execution stopped by user signal/interruption before completion. | `130` (SIGINT-style) |
+| `timeout` | Task exceeded configured timeout. | `124` |
+
+When you use `--json`, these values appear directly in the structured result payload so downstream tooling does not need to parse terminal text.
