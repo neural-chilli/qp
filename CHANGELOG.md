@@ -4,6 +4,29 @@ All notable changes to `qp` will be documented in this file.
 
 The format is intentionally lightweight and based on tagged releases.
 
+## [v0.4.0] - 2026-03-25
+
+### Added
+
+- `qp arch-check` with structured JSON output for architecture violations
+- harness-oriented initialization via `qp init --harness`
+- first-pass `architecture` config support (`layers`, `domains`, `rules`)
+- README branding updates with logo and badges
+
+### Changed
+
+- CEL expression engine now uses registered `branch()` and `env()` functions instead of string rewriting
+- `loadConfig()` now discovers `qp.yaml` by walking upward from subdirectories
+- guard reporting now owns guard-specific result shaping (reduced runner coupling)
+- default project guard/check pipeline now includes `go vet`
+
+### Fixed
+
+- schema now includes implemented fields (`run`, `vars`, `templates`, `profiles`, and architecture entries)
+- serve token default renamed from legacy `FKN_MCP_TOKEN` to `QP_MCP_TOKEN`
+- structured error extraction now falls back to generic parsing when declared parser has no matches
+- repair diff cap now consistently follows `context.caps.git_diff_lines`
+
 ## [v0.3.2] - 2026-03-23
 
 ### Changed
