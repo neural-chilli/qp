@@ -39,6 +39,7 @@ website:
           - secrets.qmd
           - caching.qmd
           - retry.qmd
+          - context.qmd
           - tasks-and-params.qmd
           - dags.qmd
           - expressions.qmd

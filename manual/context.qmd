@@ -1,0 +1,112 @@
+---
+title: "Context"
+---
+
+`qp context` builds bounded repository briefings for humans and agents. It is designed to produce useful context without dumping the entire repo.
+
+## Modes
+
+### Default mode
+
+```bash
+qp context
+```
+
+Includes project/task/guard metadata plus selected repo context configured in `context:`.
+
+### Agent mode
+
+```bash
+qp context --agent --task check
+```
+
+Agent mode adds task-scoped file targeting, codemap details, and last-guard context. `--task` is required with `--agent`.
+
+### Topic mode
+
+```bash
+qp context --about "transport protocol"
+```
+
+Topic mode surfaces matching tasks, scopes, codemap entries, glossary terms, and relevant paths.
+
+### JSON mode
+
+```bash
+qp context --json --about "release safety"
+```
+
+Returns sections + rendered markdown in one structured payload.
+
+## Output Controls
+
+```bash
+qp context --out .qp/context.md
+qp context --copy
+qp context --max-tokens 2500
+```
+
+- `--out`: write markdown to file
+- `--copy`: copy markdown to clipboard
+- `--max-tokens`: rough truncation budget for handoffs
+
+## Example: Agent Handoff
+
+```bash
+qp context --agent --task check --max-tokens 3000 --out .qp/agent-context.md
+```
+
+Resulting brief typically includes:
+
+1. Project summary
+2. Agent task details and scoped files
+3. File tree snapshot
+4. Task + guard map
+5. codemap excerpts
+6. last guard status
+7. current git diff summary
+
+## Context Configuration
+
+Tune output through top-level `context:`:
+
+```yaml
+context:
+  file_tree: true
+  git_log_lines: 12
+  git_diff: true
+  todos: true
+  dependencies: true
+  files:
+    - README.md
+    - docs/user-guide.md
+  agent_files:
+    - AGENTS.md
+    - CLAUDE.md
+  include:
+    - cmd/**/*
+    - internal/**/*
+  exclude:
+    - vendor/**
+    - .git/**
+  caps:
+    file_tree_entries: 200
+    files_max: 6
+    file_lines: 120
+    git_log_lines: 30
+    git_diff_lines: 250
+    todos_max: 25
+    agent_file_lines: 600
+    dependency_lines: 150
+```
+
+## Practical Usage Patterns
+
+1. Generate topic context before planning: `qp context --about "<topic>"`.
+2. Generate task-scoped agent context before edits: `qp context --agent --task <task>`.
+3. Persist context artifacts in CI for debugging.
+4. Use `--json` when another tool needs deterministic structure.
+
+## Next Step
+
+For semantic repository metadata used by context and explain flows, continue to [Codemap](codemap.qmd).
