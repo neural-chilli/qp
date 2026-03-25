@@ -262,6 +262,7 @@ With that file in place:
 ```bash
 qp list
 qp test
+qp run test
 qp check
 qp check --dry-run
 qp test --json

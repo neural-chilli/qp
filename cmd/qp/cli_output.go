@@ -30,6 +30,7 @@ func printUsage(stdout *os.File) {
 		"qp context [--agent] [--json] [--task <name>] [--about <topic>] [--out <file>] [--copy] [--max-tokens <approx-n>]",
 		"qp guard [name] [--json]",
 		"qp repair [name] [--json] [--copy]",
+		"qp run <task> [task-flags]",
 		"qp setup [--windows]",
 		"qp init [--from-repo] [--docs] [--harness]",
 		"qp list [--json]",

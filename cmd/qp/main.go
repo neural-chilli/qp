@@ -87,6 +87,8 @@ func run(args []string, stdout, stderr *os.File) int {
 		return runDaemon(args[1:], stdout, stderr)
 	case "setup":
 		return runSetup(args[1:], stdout, stderr)
+	case "run":
+		return runTask(args[1:], stdout, stderr)
 	default:
 		return runTask(args, stdout, stderr)
 	}

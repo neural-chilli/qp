@@ -152,6 +152,8 @@ func completionCandidates(args []string, cfg any) []string {
 		return filterCompletionCandidates([]string{"start", "stop", "status", "restart"}, current)
 	case "setup":
 		return filterCompletionCandidates([]string{"--windows"}, current)
+	case "run":
+		return filterCompletionCandidates(runCandidates(rest, configValue), current)
 	default:
 		return nil
 	}
@@ -175,6 +177,7 @@ func topLevelCandidates(cfg *config.Config) []string {
 		"plan",
 		"prompt",
 		"repair",
+		"run",
 		"scope",
 		"setup",
 		"validate",
@@ -187,6 +190,21 @@ func topLevelCandidates(cfg *config.Config) []string {
 	candidates = append(candidates, ordered.Keys(cfg.Tasks)...)
 	candidates = append(candidates, ordered.Keys(cfg.Aliases)...)
 	return uniqueStrings(candidates)
+}
+
+func runCandidates(args []string, cfg *config.Config) []string {
+	candidates := []string{"--json", "--dry-run", "--no-cache", "--allow-unsafe", "--events", "--param", "--no-color"}
+	if cfg == nil {
+		return candidates
+	}
+	if len(args) <= 1 {
+		candidates = append(candidates, ordered.Keys(cfg.Tasks)...)
+		candidates = append(candidates, ordered.Keys(cfg.Aliases)...)
+		return uniqueStrings(candidates)
+	}
+	taskName := args[0]
+	taskCandidates := taskInvocationCandidates(taskName, args[1:], cfg)
+	return uniqueStrings(append(candidates, taskCandidates...))
 }
 
 func helpCandidates(cfg *config.Config) []string {
