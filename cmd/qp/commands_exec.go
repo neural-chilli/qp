@@ -270,6 +270,7 @@ func runTask(args []string, stdout, stderr *os.File) int {
 	jsonOut := fs.Bool("json", false, "")
 	dryRun := fs.Bool("dry-run", false, "")
 	verbose := fs.Bool("verbose", false, "")
+	quiet := fs.Bool("quiet", false, "")
 	noCache := fs.Bool("no-cache", false, "")
 	allowUnsafe := fs.Bool("allow-unsafe", false, "")
 	eventsOut := fs.Bool("events", false, "")
@@ -291,6 +292,7 @@ func runTask(args []string, stdout, stderr *os.File) int {
 		JSON:        *jsonOut,
 		DryRun:      *dryRun,
 		Verbose:     *verbose,
+		Quiet:       *quiet,
 		NoCache:     *noCache,
 		AllowUnsafe: *allowUnsafe,
 		Stdout:      stdout,
@@ -312,7 +314,9 @@ func runTask(args []string, stdout, stderr *os.File) int {
 		}
 		return printJSON(stdout, result)
 	}
-	printTaskTimingSummary(stdout, result)
+	if !*quiet {
+		printTaskTimingSummary(stdout, result)
+	}
 	return result.ExitCode
 }
 

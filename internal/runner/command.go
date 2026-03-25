@@ -18,7 +18,7 @@ import (
 
 func (r *Runner) runCommand(parent context.Context, label string, task config.Task, command string, opts Options, prefix string) (runOutcome, error) {
 	started := time.Now()
-	if opts.Verbose && opts.Stderr != nil && !task.Silent {
+	if opts.Verbose && !opts.Quiet && opts.Stderr != nil && !task.Silent {
 		fmt.Fprintf(opts.Stderr, "[qp] %s: %s\n", label, command)
 	}
 	if opts.DryRun {

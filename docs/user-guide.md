@@ -415,6 +415,7 @@ Useful global/runtime flags:
 - `--json` emits structured command output for machine consumers.
 - `--events` emits NDJSON execution events.
 - `--verbose` shows resolved commands before execution.
+- `--quiet` suppresses informational summaries in human-readable output.
 
 For task and guard execution, `--events` emits:
 

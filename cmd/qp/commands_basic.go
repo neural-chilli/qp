@@ -145,9 +145,10 @@ func runGuard(args []string, stdout, stderr *os.File) int {
 	jsonOut := fs.Bool("json", false, "")
 	noCache := fs.Bool("no-cache", false, "")
 	verbose := fs.Bool("verbose", false, "")
+	quiet := fs.Bool("quiet", false, "")
 	allowUnsafe := fs.Bool("allow-unsafe", false, "")
 	eventsOut := fs.Bool("events", false, "")
-	parsedArgs, err := parseSubcommandArgs(args, map[string]bool{"--json": false, "--no-cache": false, "--verbose": false, "--allow-unsafe": false, "--events": false})
+	parsedArgs, err := parseSubcommandArgs(args, map[string]bool{"--json": false, "--no-cache": false, "--verbose": false, "--quiet": false, "--allow-unsafe": false, "--events": false})
 	if err != nil {
 		printError(stderr, err)
 		return 2
@@ -185,6 +186,7 @@ func runGuard(args []string, stdout, stderr *os.File) int {
 		JSON:        *jsonOut,
 		NoCache:     *noCache,
 		Verbose:     *verbose,
+		Quiet:       *quiet,
 		AllowUnsafe: *allowUnsafe,
 		Stdout:      stdout,
 		Stderr:      stderr,
@@ -205,7 +207,9 @@ func runGuard(args []string, stdout, stderr *os.File) int {
 		return printJSON(stdout, report)
 	}
 
-	printGuardReport(stdout, report)
+	if !*quiet {
+		printGuardReport(stdout, report)
+	}
 	return report.ExitCode
 }
 
