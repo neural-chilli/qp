@@ -50,8 +50,12 @@ func (r *Runner) runSequential(ctx context.Context, taskName string, task config
 }
 
 func (r *Runner) runParallel(parent context.Context, taskName string, task config.Task, needs []Result, started time.Time, opts Options) (Result, error) {
-	if task.ContinueOnError && !opts.JSON {
-		fmt.Fprintln(opts.Stderr, "warning: continue_on_error is ignored for parallel tasks in v1")
+	warningText := ""
+	if task.ContinueOnError {
+		warningText = "warning: continue_on_error is ignored for parallel tasks in v1"
+		if !opts.JSON && opts.Stderr != nil {
+			fmt.Fprintln(opts.Stderr, warningText)
+		}
 	}
 
 	ctx, cancel := context.WithCancel(parent)
@@ -114,6 +118,7 @@ func (r *Runner) runParallel(parent context.Context, taskName string, task confi
 		Parallel:   true,
 		Status:     overallStatus,
 		ExitCode:   overallCode,
+		Stderr:     warningText,
 		Errors:     collectStepErrors(steps),
 		DurationMS: finished.Sub(started).Milliseconds(),
 		StartedAt:  started.UTC().Format(time.RFC3339),

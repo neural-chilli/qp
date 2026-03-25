@@ -233,6 +233,23 @@ func TestParallelPipelineCancelsOtherStepOnFailure(t *testing.T) {
 	}
 }
 
+func TestParallelPipelineContinueOnErrorIncludesStructuredWarning(t *testing.T) {
+	repoRoot := t.TempDir()
+	r := New(&config.Config{Tasks: map[string]config.Task{
+		"fail": {Desc: "fail", Cmd: "exit 1"},
+		"slow": {Desc: "slow", Cmd: "sleep 1; echo done > slow.txt"},
+		"par":  {Desc: "par", Steps: []string{"fail", "slow"}, Parallel: true, ContinueOnError: true},
+	}}, repoRoot)
+
+	result, err := r.Run("par", Options{Stdout: io.Discard, Stderr: io.Discard, JSON: true})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if result.Stderr == "" || !strings.Contains(result.Stderr, "continue_on_error is ignored") {
+		t.Fatalf("Stderr = %q, want continue_on_error warning", result.Stderr)
+	}
+}
+
 func TestRunCmdTaskInjectsParamsIntoEnvAndTemplate(t *testing.T) {
 	t.Parallel()
 
