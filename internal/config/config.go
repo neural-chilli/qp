@@ -1,10 +1,14 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
+	"strings"
 
 	celpkg "github.com/neural-chilli/qp/internal/cel"
 	"gopkg.in/yaml.v3"
@@ -14,7 +18,7 @@ type Config struct {
 	Project      string             `yaml:"project"`
 	Description  string             `yaml:"description"`
 	Default      string             `yaml:"default"`
-	Vars         map[string]string  `yaml:"vars"`
+	Vars         Vars               `yaml:"vars"`
 	Templates    map[string]string  `yaml:"templates"`
 	Profiles     map[string]Profile `yaml:"profiles"`
 	Defaults     DefaultsConfig     `yaml:"defaults"`
@@ -37,6 +41,8 @@ type Profile struct {
 	Vars  map[string]string      `yaml:"vars"`
 	Tasks map[string]ProfileTask `yaml:"tasks"`
 }
+
+type Vars map[string]string
 
 type ProfileTask struct {
 	When    string            `yaml:"when"`
@@ -78,6 +84,11 @@ type Param struct {
 type TaskCache struct {
 	Enabled bool     `yaml:"enabled"`
 	Paths   []string `yaml:"paths"`
+}
+
+type VarSpec struct {
+	Value string
+	Sh    string
 }
 
 type Guard struct {
@@ -252,6 +263,18 @@ func LoadWithProfile(path, profile string) (*Config, error) {
 		return nil, err
 	}
 
+	var rawCfg struct {
+		Vars map[string]VarSpec `yaml:"vars"`
+	}
+	if err := yaml.Unmarshal(raw, &rawCfg); err != nil {
+		return nil, err
+	}
+	resolvedVars, err := resolveVars(rawCfg.Vars, filepath.Dir(path))
+	if err != nil {
+		return nil, err
+	}
+	cfg.Vars = resolvedVars
+
 	if profile != "" {
 		if err := cfg.applyProfile(profile); err != nil {
 			return nil, err
@@ -273,7 +296,7 @@ func (c *Config) applyProfile(profile string) error {
 		return fmt.Errorf("unknown profile %q", profile)
 	}
 	if c.Vars == nil {
-		c.Vars = map[string]string{}
+		c.Vars = Vars{}
 	}
 	for name, value := range profileCfg.Vars {
 		c.Vars[name] = value
@@ -372,6 +395,123 @@ func (c *TaskCache) UnmarshalYAML(value *yaml.Node) error {
 	default:
 		return fmt.Errorf("task cache must be a boolean or mapping")
 	}
+}
+
+func (v *Vars) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind != yaml.MappingNode {
+		return fmt.Errorf("vars must be a mapping")
+	}
+	out := make(Vars)
+	for i := 0; i < len(value.Content); i += 2 {
+		keyNode := value.Content[i]
+		valNode := value.Content[i+1]
+
+		var key string
+		if err := keyNode.Decode(&key); err != nil {
+			return err
+		}
+		switch valNode.Kind {
+		case yaml.ScalarNode:
+			var staticValue string
+			if err := valNode.Decode(&staticValue); err != nil {
+				return err
+			}
+			out[key] = staticValue
+		case yaml.MappingNode:
+			var spec VarSpec
+			if err := valNode.Decode(&spec); err != nil {
+				return err
+			}
+			out[key] = ""
+		default:
+			return fmt.Errorf("vars.%s: var value must be a string or mapping", key)
+		}
+	}
+	*v = out
+	return nil
+}
+
+func (v *VarSpec) UnmarshalYAML(value *yaml.Node) error {
+	switch value.Kind {
+	case yaml.ScalarNode:
+		var staticValue string
+		if err := value.Decode(&staticValue); err != nil {
+			return err
+		}
+		v.Value = staticValue
+		v.Sh = ""
+		return nil
+	case yaml.MappingNode:
+		type rawVarSpec struct {
+			Sh string `yaml:"sh"`
+		}
+		var raw rawVarSpec
+		if err := value.Decode(&raw); err != nil {
+			return err
+		}
+		if strings.TrimSpace(raw.Sh) == "" {
+			return fmt.Errorf("var mapping must define non-empty sh")
+		}
+		v.Value = ""
+		v.Sh = raw.Sh
+		return nil
+	default:
+		return fmt.Errorf("var value must be a string or mapping")
+	}
+}
+
+func resolveVars(specs map[string]VarSpec, repoRoot string) (Vars, error) {
+	if len(specs) == 0 {
+		return nil, nil
+	}
+
+	names := make([]string, 0, len(specs))
+	for name := range specs {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	resolved := make(Vars, len(specs))
+	for _, name := range names {
+		spec := specs[name]
+		if spec.Sh == "" {
+			resolved[name] = spec.Value
+			continue
+		}
+		value, err := runVarShell(spec.Sh, repoRoot)
+		if err != nil {
+			return nil, fmt.Errorf("vars.%s: %w", name, err)
+		}
+		resolved[name] = value
+	}
+	return resolved, nil
+}
+
+func runVarShell(command, repoRoot string) (string, error) {
+	shell := "sh"
+	args := []string{"-c", command}
+	if runtime.GOOS == "windows" {
+		shell = "cmd"
+		args = []string{"/C", command}
+	}
+
+	cmd := exec.Command(shell, args...)
+	cmd.Dir = repoRoot
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		errText := strings.TrimSpace(stderr.String())
+		if errText != "" {
+			return "", fmt.Errorf("shell command %q failed: %s", command, errText)
+		}
+		return "", fmt.Errorf("shell command %q failed: %w", command, err)
+	}
+
+	return strings.TrimSpace(stdout.String()), nil
 }
 
 func (c *Config) Validate(repoRoot string) error {

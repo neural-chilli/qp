@@ -576,7 +576,7 @@ tasks:
 
 Current support:
 
-- top-level `vars` values
+- top-level `vars` values (static or shell-resolved)
 - top-level `templates` string snippets
 - top-level `profiles` with:
   - `vars` overrides
@@ -587,9 +587,11 @@ Example:
 ```yaml
 vars:
   region: us-east-1
+  git_sha:
+    sh: "git rev-parse --short HEAD"
 
 templates:
-  deploy_cmd: ./scripts/deploy --region {{vars.region}}
+  deploy_cmd: ./scripts/deploy --region {{vars.region}} --sha {{vars.git_sha}}
 
 tasks:
   deploy:
@@ -614,6 +616,12 @@ Profile selection currently uses environment variable:
 QP_PROFILE=prod qp deploy
 ```
 
+For shell-resolved vars:
+
+- `sh` commands run during config load (fail-fast if a command fails)
+- commands run from the repo root (directory containing `qp.yaml`)
+- stdout is trimmed and used as the var value
+
 ## Task Caching and Skip
 
 `qp` now supports opt-in task result caching for command tasks.
@@ -625,15 +633,21 @@ tasks:
   test:
     desc: Run tests
     cmd: go test ./...
-    cache: true
+    cache:
+      paths:
+        - "**/*.go"
+        - go.mod
+        - go.sum
 ```
 
 Behavior:
 
 - cache storage is local: `.qp/cache/`
 - cache currently applies to `cmd` tasks only
-- cache key includes task config, resolved command, params, env overlays, working dir, and selected profile
+- cache key includes task config, resolved command, params, env overlays, working dir, selected profile, and optional content hash from `cache.paths`
 - on cache hit, command execution is skipped and cached stdout/stderr is replayed
+
+If you prefer the original behavior, `cache: true` is still supported and skips file content hashing.
 
 Bypass cache for a run:
 

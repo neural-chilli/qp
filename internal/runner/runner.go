@@ -176,7 +176,7 @@ func (r *Runner) runTask(ctx context.Context, taskName string, opts Options) (Re
 		if err != nil {
 			return Result{}, fmt.Errorf("task %q: %w", taskName, err)
 		}
-		resolved := interpolateTaskValue(task.Cmd, paramValues, r.cfg.Vars, r.cfg.Templates)
+		resolved := interpolateTaskValue(task.Cmd, paramValues, map[string]string(r.cfg.Vars), r.cfg.Templates)
 		if task.CacheEnabled() && !opts.NoCache && !opts.DryRun {
 			contentHash := ""
 			if paths := task.CachePaths(); len(paths) > 0 {
@@ -191,7 +191,7 @@ func (r *Runner) runTask(ctx context.Context, taskName string, opts Options) (Re
 				Task:        task,
 				ResolvedCmd: resolved,
 				Params:      paramValues,
-				Env:         interpolateEnv(task.Env, paramValues, r.cfg.Vars, r.cfg.Templates),
+				Env:         interpolateEnv(task.Env, paramValues, map[string]string(r.cfg.Vars), r.cfg.Templates),
 				WorkDir:     r.resolveTaskDir(task),
 				Profile:     os.Getenv("QP_PROFILE"),
 				ExtraEnv:    opts.Env,
@@ -294,8 +294,8 @@ func (r *Runner) celVars(opts Options) map[string]any {
 		"env":    env,
 		"branch": r.branch,
 		"params": opts.Params,
-		"vars":   r.cfg.Vars,
-		"var":    r.cfg.Vars,
+		"vars":   map[string]string(r.cfg.Vars),
+		"var":    map[string]string(r.cfg.Vars),
 	}
 }
 

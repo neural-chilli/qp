@@ -285,6 +285,61 @@ tasks:
 	}
 }
 
+func TestLoadResolvesShellVars(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "qp.yaml"), []byte(`
+vars:
+  region: us-east-1
+  git_sha:
+    sh: "echo abc123"
+tasks:
+  show:
+    desc: show
+    cmd: echo ok
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := Load(filepath.Join(dir, "qp.yaml"))
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.Vars["region"] != "us-east-1" {
+		t.Fatalf("Vars[region] = %q, want us-east-1", cfg.Vars["region"])
+	}
+	if cfg.Vars["git_sha"] != "abc123" {
+		t.Fatalf("Vars[git_sha] = %q, want abc123", cfg.Vars["git_sha"])
+	}
+}
+
+func TestLoadFailsWhenShellVarCommandFails(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "qp.yaml"), []byte(`
+vars:
+  broken:
+    sh: "exit 42"
+tasks:
+  show:
+    desc: show
+    cmd: echo ok
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err := Load(filepath.Join(dir, "qp.yaml"))
+	if err == nil {
+		t.Fatal("Load() error = nil, want shell var failure")
+	}
+	if !strings.Contains(err.Error(), `vars.broken`) {
+		t.Fatalf("Load() error = %v, want vars.broken context", err)
+	}
+}
+
 func TestLoadRejectsUnknownSafety(t *testing.T) {
 	t.Parallel()
 

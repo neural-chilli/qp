@@ -43,7 +43,7 @@ func (r *Runner) runCommand(parent context.Context, label string, task config.Ta
 	if err != nil {
 		return runOutcome{}, fmt.Errorf("task %q: %w", label, err)
 	}
-	cmd.Env = mergeEnv(os.Environ(), r.globalEnv, interpolateEnv(task.Env, paramValues, r.cfg.Vars, r.cfg.Templates), opts.Env, paramEnv(task, paramValues))
+	cmd.Env = mergeEnv(os.Environ(), r.globalEnv, interpolateEnv(task.Env, paramValues, map[string]string(r.cfg.Vars), r.cfg.Templates), opts.Env, paramEnv(task, paramValues))
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 	stdoutEvents := newEventLineWriter(label, "stdout", opts.Events)
