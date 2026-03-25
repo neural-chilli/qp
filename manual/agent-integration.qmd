@@ -1,0 +1,96 @@
+---
+title: "Agent Integration"
+---
+
+`qp` is built to make agent-assisted development predictable: clear task contracts, scoped context, structured outputs, and generated repo guidance.
+
+## Generate Agent-Friendly Repo Docs
+
+Bootstrap docs from your current `qp.yaml`:
+
+```bash
+qp init --docs
+```
+
+This creates:
+
+- `HUMANS.md`
+- `AGENTS.md`
+- `CLAUDE.md`
+
+Each file includes task/guard/scopes summaries and conventions aligned to your config.
+
+## The One-Command Contract
+
+Keep one canonical verification command in agent docs (for example `qp check` or `qp guard ci`).
+
+Why it matters:
+
+1. agents always know how to verify before handoff
+2. humans can reproduce exactly what automation ran
+3. release quality becomes consistent across contributors
+
+## Scope-First Agent Workflow
+
+A robust loop:
+
+```bash
+qp diff-plan
+qp agent-brief --diff --max-tokens 2500
+qp context --agent --task check --max-tokens 3000
+```
+
+Then ask the agent to:
+
+1. make bounded edits in scoped files
+2. run the one-command verification
+3. summarize results and follow-ups
+
+## Knowledge Accrual
+
+Enable explicit config-learning behavior:
+
+```yaml
+agent:
+  accrue_knowledge: true
+```
+
+With accrual enabled, generated agent docs instruct agents to propose structured updates to:
+
+- `tasks` / params / scopes
+- codemap package entries
+- conventions and glossary terms
+
+This turns `qp.yaml` into a living operational knowledge base.
+
+## Practical Prompting Pattern
+
+When requesting agent changes, provide:
+
+1. task goal
+2. allowed scope
+3. required verification command
+4. expected output format (diff summary, test result, follow-ups)
+
+Example:
+
+```text
+Use qp scope backend as boundary. Fix flaky retry behavior in runner cache path.
+Run qp check --json before finishing.
+Summarize changed files, behavior change, and remaining risks.
+```
+
+## Structured Output For Agent Tooling
+
+Use:
+
+- `--json` for final state extraction
+- `--events` for lifecycle stream
+- `qp repair --brief` for failure handoff
+- `qp agent-brief` for concise context transfer
+
+These outputs reduce prompt ambiguity and brittle log scraping.
+
+## Next Step
+
+For creating the initial `qp.yaml` and generated repo scaffolding, continue to [Init and Scaffolding](init-and-scaffolding.qmd).

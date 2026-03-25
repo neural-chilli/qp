@@ -89,6 +89,7 @@ If you prefer a browsable multi-page manual with search, left navigation, and ri
 - [Codemap](../manual/codemap.qmd)
 - [Planning](../manual/planning.qmd)
 - [Repair](../manual/repair.qmd)
+- [Agent integration](../manual/agent-integration.qmd)
 
 ## Windows Daemon Mode
 

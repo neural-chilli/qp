@@ -43,6 +43,7 @@ website:
           - codemap.qmd
           - planning.qmd
           - repair.qmd
+          - agent-integration.qmd
           - tasks-and-params.qmd
           - dags.qmd
           - expressions.qmd
