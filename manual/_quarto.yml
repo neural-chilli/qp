@@ -42,6 +42,7 @@ website:
           - context.qmd
           - codemap.qmd
           - planning.qmd
+          - repair.qmd
           - tasks-and-params.qmd
           - dags.qmd
           - expressions.qmd

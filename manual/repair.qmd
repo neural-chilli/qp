@@ -1,0 +1,117 @@
+---
+title: "Repair"
+---
+
+`qp repair` reruns guard checks and produces structured remediation context designed for fast fixes and agent handoff.
+
+## What Repair Does
+
+For a guard run, repair collects:
+
+1. overall guard status
+2. failing steps
+3. parsed diagnostics (when available)
+4. scope metadata for failing tasks
+5. current git diff snippet (full mode)
+6. suggested next action text
+
+## Basic Usage
+
+```bash
+qp repair
+qp repair ci
+```
+
+If no guard name is provided, repair targets the default guard flow.
+
+## Output Modes
+
+### Full markdown report
+
+```bash
+qp repair ci
+```
+
+Includes guard status table, per-failure details, truncated git diff, and next-action guidance.
+
+### Brief handoff mode
+
+```bash
+qp repair ci --brief
+```
+
+Produces concise failure-centric output for quick copy/paste into issue comments or agent prompts.
+
+### JSON mode
+
+```bash
+qp repair ci --json
+```
+
+Returns structured fields:
+
+- `guard`, `overall`, `exit_code`, `ran_at`
+- `failures[]` (task, status, scope, parsed errors, stderr)
+- `git_diff`
+- `suggested_next_action`
+- rendered `markdown`
+
+### Clipboard mode
+
+```bash
+qp repair ci --copy
+```
+
+Copies markdown output directly to clipboard.
+
+## Unsafe Task Handling
+
+If repair guard steps include `destructive`/`external` tasks:
+
+```bash
+qp repair ci --allow-unsafe
+```
+
+This mirrors guard safety behavior and keeps risky execution explicit.
+
+## Worked Example
+
+```yaml
+tasks:
+  lint:
+    desc: Lint code
+    cmd: golangci-lint run
+    scope: backend
+
+  test:
+    desc: Run tests
+    cmd: go test ./...
+    error_format: go_test
+    scope: backend
+
+guards:
+  ci:
+    steps: [lint, test]
+```
+
+```bash
+qp repair ci --brief
+```
+
+Brief output highlights failing task names, scope paths, and parsed error entries so fixes can start immediately.
+
+## Repair + Planning Loop
+
+A practical loop:
+
+1. `qp repair ci --json`
+2. extract failing files/scopes
+3. `qp agent-brief --file ...` or `qp diff-plan`
+4. apply fix
+5. rerun `qp repair ci`
+
+This keeps remediation grounded in observed failures and bounded change areas.
+
+## Next Step
+
+For end-to-end collaboration patterns with coding agents, continue to [Agent Integration](agent-integration.qmd).
