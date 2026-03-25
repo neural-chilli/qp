@@ -27,6 +27,7 @@ website:
           - index.qmd
           - getting-started.qmd
           - concepts.qmd
+          - tasks.qmd
           - tasks-and-params.qmd
           - dags.qmd
           - expressions.qmd

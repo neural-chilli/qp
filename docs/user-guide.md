@@ -66,6 +66,14 @@ Supported shells today:
 
 `qp completion <shell>` prints a completion script, and `qp completion install` does a best-effort install into the standard location for the current shell.
 
+## Web Manual
+
+If you prefer a browsable multi-page manual with search, left navigation, and right-page index, see the Quarto docs site:
+
+- [Manual home](../manual/index.qmd)
+- [Core concepts](../manual/concepts.qmd)
+- [Tasks reference](../manual/tasks.qmd)
+
 ## Windows Daemon Mode
 
 On Windows, `qp` supports daemon mode to avoid repeated process startup overhead on each invocation.

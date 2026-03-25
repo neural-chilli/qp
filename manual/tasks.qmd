@@ -1,0 +1,222 @@
+---
+title: "Tasks"
+---
+
+Tasks are the core unit in `qp`: every executable workflow (linting, testing, builds, deploys, checks) is a task.
+
+## Task Anatomy
+
+Every task needs:
+
+1. `desc` (required)
+2. Exactly one execution mode:
+   - `cmd` for one shell command
+   - `steps` for a pipeline of named tasks or inline shell commands
+   - `run` for expression DAG execution
+
+```yaml
+tasks:
+  lint:
+    desc: Lint the repo
+    cmd: golangci-lint run
+
+  check:
+    desc: Quality gate
+    steps: [lint, test]
+
+  release:
+    desc: Branch-aware publish flow
+    run: when(branch() == "main", publish)
+```
+
+## Command Tasks
+
+### Basic command task
+
+```yaml
+tasks:
+  test:
+    desc: Run all tests
+    cmd: go test ./...
+```
+
+### Command task with env, dir, shell
+
+```yaml
+defaults:
+  dir: .
+
+tasks:
+  ui-test:
+    desc: Run web tests in strict bash mode
+    cmd: npm test -- --runInBand
+    dir: web
+    shell: /bin/bash
+    shell_args: [-euo, pipefail, -c]
+    env:
+      CI: "1"
+      NODE_ENV: test
+```
+
+`dir` overrides `defaults.dir` for that task. `shell` and `shell_args` let you opt into strict shell behavior when needed.
+
+### `qp help <task>` output
+
+```text
+$ qp help ui-test
+Task: ui-test
+Description: Run web tests in strict bash mode
+Usage: qp ui-test [--var name=value] [--profile name] [--dry-run] [--verbose] [--quiet] [--no-cache] [--allow-unsafe] [--events] [--json]
+Type: cmd
+Dir: web
+Shell: /bin/bash -euo pipefail -c
+Safety: safe
+```
+
+## Working Directory Rules
+
+Use top-level `defaults.dir` for consistent repo-relative execution, and override per task only when needed.
+
+```yaml
+defaults:
+  dir: services/api
+
+tasks:
+  lint:
+    desc: Lint API service
+    cmd: golangci-lint run ./...
+
+  docs:
+    desc: Build docs site from repo root
+    dir: .
+    cmd: quarto render manual
+```
+
+## Environment Variables
+
+Environment values can come from:
+
+1. Your process environment
+2. Top-level `env_file`
+3. Task `env`
+4. CLI overlays (`--var`, profiles, params, etc.) that interpolate into task values
+
+```yaml
+env_file: .env
+
+tasks:
+  smoke:
+    desc: Hit API health endpoint
+    cmd: curl -fsS "$BASE_URL/healthz"
+    env:
+      BASE_URL: https://staging.internal.example
+```
+
+```bash
+qp smoke
+```
+
+## Safety Levels
+
+Safety labels help humans and agents decide what is safe to run automatically.
+
+| Safety | Typical usage | Requires `--allow-unsafe` |
+|---|---|---|
+| `safe` | Read-only checks (`go test`, linters, static analysis) | No |
+| `idempotent` | Repeatable mutations (`terraform plan`, sync jobs) | No |
+| `destructive` | Repo/data mutation (`rm`, schema drops, force rewrites) | Yes |
+| `external` | Outside-repo side effects (deploys, releases, notifications) | Yes |
+
+```yaml
+tasks:
+  deploy:
+    desc: Deploy API to production
+    cmd: ./scripts/deploy-prod.sh
+    safety: external
+```
+
+```bash
+qp deploy
+# task "deploy" is marked external; rerun with --allow-unsafe ...
+
+qp deploy --allow-unsafe
+```
+
+`--dry-run` still works without `--allow-unsafe`, which is useful for validating intent before execution.
+
+## Agent Visibility, Silent, Defer, Timeout
+
+```yaml
+tasks:
+  compose-up:
+    desc: Start local stack
+    cmd: docker compose up -d
+    defer: docker compose down
+    timeout: 5m
+    silent: false
+    agent: false
+```
+
+- `agent: false` hides risky or noisy tasks from autonomous agent defaults.
+- `defer` always runs after the main command (pass or fail), commonly used for cleanup.
+- `timeout` uses Go duration syntax (`30s`, `5m`, `1h`).
+- timeout exits with code `124` and status `timeout`.
+
+## Error Formats
+
+If a task emits stable diagnostics, set `error_format` so `--json` output includes parsed errors.
+
+Supported values: `go_test`, `pytest`, `tsc`, `eslint`, `generic`.
+
+```yaml
+tasks:
+  unit:
+    desc: Run Go tests with structured diagnostics
+    cmd: go test ./...
+    error_format: go_test
+```
+
+```bash
+qp unit --json
+```
+
+`qp` still streams raw stderr/stdout, and adds structured parse data when possible.
+
+## Dependencies With `needs`
+
+Use `needs` when prerequisites should run before a command task, while keeping that task's own command separate.
+
+```yaml
+tasks:
+  lint:
+    desc: Lint code
+    cmd: golangci-lint run
+
+  test:
+    desc: Run tests
+    cmd: go test ./...
+
+  build:
+    desc: Build binary after quality checks
+    needs: [lint, test]
+    cmd: go build ./cmd/qp
+```
+
+Difference from `steps`:
+
+- `needs` = prerequisite tasks run first, then this task's command runs
+- `steps` = this task is itself a pipeline definition
+
+## Default Task
+
+Set a top-level default for the common command:
+
+```yaml
+default: check
+```
+
+Now plain `qp` runs `check`.
+
+## Next Step
+
+For a deep dive on parameter passing and validation rules, continue to [Tasks and Params](tasks-and-params.qmd).
