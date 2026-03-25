@@ -30,11 +30,29 @@ func (s *EventStream) emit(payload map[string]any) {
 }
 
 func (s *EventStream) EmitPlan(rootTask string) {
+	s.EmitPlanGraph(rootTask, nil, nil)
+}
+
+func (s *EventStream) EmitPlanGraph(rootTask string, nodes []string, edges [][2]string) {
+	graph := map[string]any{
+		"root": rootTask,
+	}
+	if len(nodes) > 0 {
+		graph["nodes"] = nodes
+	}
+	if len(edges) > 0 {
+		edgeItems := make([]map[string]string, 0, len(edges))
+		for _, edge := range edges {
+			edgeItems = append(edgeItems, map[string]string{
+				"from": edge[0],
+				"to":   edge[1],
+			})
+		}
+		graph["edges"] = edgeItems
+	}
 	s.emit(map[string]any{
-		"type": "plan",
-		"graph": map[string]any{
-			"root": rootTask,
-		},
+		"type":  "plan",
+		"graph": graph,
 	})
 }
 

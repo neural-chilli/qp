@@ -180,7 +180,8 @@ func runGuard(args []string, stdout, stderr *os.File) int {
 		if guardName == "" {
 			guardName = "default"
 		}
-		events.EmitPlan("guard:" + guardName)
+		nodes, edges := guardPlanGraph(cfg, guardName)
+		events.EmitPlanGraph("guard:"+guardName, nodes, edges)
 	}
 	report, err := guard.New(cfg, repoRoot, taskRunner).Run(name, runner.Options{
 		JSON:        *jsonOut,

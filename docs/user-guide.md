@@ -429,6 +429,8 @@ For task and guard execution, `--events` emits:
 
 When `env_file` is configured, `--events` mode also prints a one-line stderr note such as `loaded 3 vars from .env` before task execution.
 
+`plan` events now include graph details with `nodes` and `edges` arrays in addition to the root target.
+
 Examples:
 
 ```bash

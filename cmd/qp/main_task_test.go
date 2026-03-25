@@ -506,6 +506,37 @@ tasks:
 	}
 }
 
+func TestRunTaskEventsIncludePlanNodesAndEdges(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "qp.yaml"), []byte(`
+tasks:
+  test:
+    desc: Run tests
+    cmd: printf ok
+  check:
+    desc: Check
+    steps: [test]
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	restore := chdirForTest(t, dir)
+	defer restore()
+
+	stdout, _ := tempOutputFile(t)
+	stderr, readStderr := tempOutputFile(t)
+
+	code := run([]string{"check", "--events"}, stdout, stderr)
+	if code != 0 {
+		t.Fatalf("run(check --events) code = %d, want 0; stderr=%s", code, readStderr())
+	}
+	events := readStderr()
+	for _, want := range []string{`"type":"plan"`, `"nodes"`, `"edges"`, `"from":"check"`, `"to":"test"`} {
+		if !strings.Contains(events, want) {
+			t.Fatalf("events = %q, want %s", events, want)
+		}
+	}
+}
+
 func TestRunTaskEventsReportLoadedEnvFileVars(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, ".env"), []byte("TOKEN=abc\n"), 0o644); err != nil {

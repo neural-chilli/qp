@@ -285,7 +285,8 @@ func runTask(args []string, stdout, stderr *os.File) int {
 			target = stdout
 		}
 		events = runner.NewEventStream(target)
-		events.EmitPlan(resolvedTaskName)
+		nodes, edges := taskPlanGraph(cfg, resolvedTaskName)
+		events.EmitPlanGraph(resolvedTaskName, nodes, edges)
 	}
 
 	result, err := runner.New(cfg, repoRoot).Run(resolvedTaskName, runner.Options{
