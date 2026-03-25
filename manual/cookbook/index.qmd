@@ -2,10 +2,51 @@
 title: "Cookbook"
 ---
 
-Practical, copy-pasteable examples for real repos.
+The cookbook is where `qp` gets practical: complete patterns you can adapt directly to real repositories.
 
-- CI guard pipeline
-- monorepo scoped checks
-- release flow with retries and profiles
+## How To Use This Section
 
-Use these as starting points and adapt to your repo layout.
+1. Pick the recipe closest to your repo shape.
+2. Copy the `qp.yaml` fragment.
+3. Rename tasks/scopes to your domain language.
+4. Run `qp validate --suggest`, then run the recipe command.
+
+Every recipe favors:
+
+- realistic defaults over toy examples
+- explicit safety and scope boundaries
+- outputs that work for both humans and automation
+
+## Recipe Catalog
+
+- [CI Guard Pipeline](ci-guard.qmd): one command for deterministic CI verification
+- [Monorepo Scoped Checks](monorepo.qmd): target checks by subsystem
+- [Release Flow](release-flow.qmd): profile-aware release with retries and safety gating
+- [Python Project Setup](python-project.qmd): pytest/ruff/black style quality gate
+- [Rust Workspace Setup](rust-workspace.qmd): fmt/clippy/test/build workspace flow
+- [Java + Gradle Setup](java-gradle.qmd): wrapper-based build and test pipeline
+- [Agent Workflow](agent-workflow.qmd): plan/brief/repair loop for agent collaboration
+- [Migration from Make](migration-from-make.qmd): gradual transition without disruption
+- [Migration from just](migration-from-just.qmd): keep recipe ergonomics while adding structure
+- [Docker Compose Integration](docker-compose.qmd): local stack lifecycle with cleanup
+- [Multi-file Config with Includes](multi-file-config.qmd): split large configs safely
+
+## Choosing The Right Recipe
+
+| If your team needs... | Start with... |
+|---|---|
+| Stable CI entrypoint | `ci-guard` |
+| Fast checks in large repos | `monorepo` |
+| Safer release automation | `release-flow` |
+| Language-first onboarding | `python-project`, `rust-workspace`, `java-gradle` |
+| Agent-ready handoffs | `agent-workflow` |
+| Legacy task migration | `migration-from-make`, `migration-from-just` |
+
+## Make Recipes Your Own
+
+The best recipe customizations are:
+
+1. add `scope:` to critical tasks
+2. add `safety:` labels to side-effecting tasks
+3. wrap validation in guards for CI reuse
+4. add `--json`/`--events` where tooling consumes results
