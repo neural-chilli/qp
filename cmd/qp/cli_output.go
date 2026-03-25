@@ -15,7 +15,7 @@ import (
 
 func printUsage(stdout *os.File) {
 	lines := []string{
-		"qp [--no-color] [<task>] [--name value] [--param name=value] [--dry-run] [--allow-unsafe] [--events] [--json]",
+		"qp [--no-color] [<task>] [--name value] [--param name=value] [--dry-run] [--no-cache] [--allow-unsafe] [--events] [--json]",
 		"If qp.yaml sets `default`, running `qp` with no task runs that task.",
 		"qp agent-brief [--task <name> | --diff | --file <path>...] [--json] [--max-tokens <approx-n>]",
 		"qp completion <bash|zsh|fish|powershell>",
@@ -69,6 +69,9 @@ func printTaskHelp(stdout *os.File, invokedName, resolvedName string, cfg *confi
 	}
 	fmt.Fprintf(stdout, "Agent: %t\n", task.AgentEnabled())
 	fmt.Fprintf(stdout, "Safety: %s\n", task.SafetyLevel())
+	if task.CacheEnabled() {
+		fmt.Fprintln(stdout, "Cache: true")
+	}
 	if task.When != "" {
 		fmt.Fprintf(stdout, "When: %s\n", task.When)
 	}
@@ -198,6 +201,7 @@ type listTask struct {
 	Name     string               `json:"name"`
 	Desc     string               `json:"desc"`
 	Type     string               `json:"type"`
+	Cache    bool                 `json:"cache,omitempty"`
 	Parallel bool                 `json:"parallel,omitempty"`
 	Needs    []string             `json:"needs,omitempty"`
 	Steps    []string             `json:"steps,omitempty"`
@@ -270,7 +274,7 @@ func taskUsage(name string, task config.Task) string {
 		}
 		parts = append(parts, "["+flag+"]")
 	}
-	parts = append(parts, "[--dry-run]", "[--allow-unsafe]", "[--events]", "[--json]")
+	parts = append(parts, "[--dry-run]", "[--no-cache]", "[--allow-unsafe]", "[--events]", "[--json]")
 	return strings.Join(parts, " ")
 }
 
@@ -313,6 +317,9 @@ func formatListSummary(item listTask) string {
 	}
 	if !item.Agent {
 		meta = append(meta, "agent:false")
+	}
+	if item.Cache {
+		meta = append(meta, "cache:true")
 	}
 	meta = append(meta, "safety:"+item.Safety)
 	return strings.Join([]string{item.Desc, "[" + strings.Join(meta, " | ") + "]"}, " ")

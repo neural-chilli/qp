@@ -202,7 +202,7 @@ func helpCandidates(cfg *config.Config) []string {
 }
 
 func guardCandidates(args []string, cfg *config.Config) []string {
-	candidates := []string{"--json", "--allow-unsafe", "--events", "--no-color"}
+	candidates := []string{"--json", "--no-cache", "--allow-unsafe", "--events", "--no-color"}
 	if cfg != nil {
 		candidates = append(candidates, ordered.Keys(cfg.Guards)...)
 	}
@@ -230,14 +230,14 @@ func watchCandidates(args []string, cfg *config.Config) []string {
 
 func taskInvocationCandidates(name string, args []string, cfg *config.Config) []string {
 	if cfg == nil {
-		return []string{"--json", "--dry-run", "--allow-unsafe", "--events", "--param", "--no-color"}
+		return []string{"--json", "--dry-run", "--no-cache", "--allow-unsafe", "--events", "--param", "--no-color"}
 	}
 	resolved, ok := cfg.ResolveTaskName(name)
 	if !ok {
 		return nil
 	}
 	task := cfg.Tasks[resolved]
-	candidates := []string{"--json", "--dry-run", "--allow-unsafe", "--events", "--param", "--no-color"}
+	candidates := []string{"--json", "--dry-run", "--no-cache", "--allow-unsafe", "--events", "--param", "--no-color"}
 	for _, paramName := range sortedParamNames(task.Params) {
 		param := task.Params[paramName]
 		if param.Position == 0 {

@@ -25,6 +25,7 @@ const (
 type Options struct {
 	JSON        bool
 	DryRun      bool
+	NoCache     bool
 	AllowUnsafe bool
 	Stdout      io.Writer
 	Stderr      io.Writer
@@ -53,6 +54,7 @@ type Result struct {
 	Stderr      string       `json:"stderr,omitempty"`
 	Errors      []ErrorEntry `json:"errors,omitempty"`
 	SkipReason  string       `json:"skip_reason,omitempty"`
+	Cached      bool         `json:"cached,omitempty"`
 	DurationMS  int64        `json:"duration_ms"`
 	StartedAt   string       `json:"started_at"`
 	FinishedAt  string       `json:"finished_at"`
@@ -175,6 +177,56 @@ func (r *Runner) runTask(ctx context.Context, taskName string, opts Options) (Re
 			return Result{}, fmt.Errorf("task %q: %w", taskName, err)
 		}
 		resolved := interpolateTaskValue(task.Cmd, paramValues, r.cfg.Vars, r.cfg.Templates)
+		if task.CacheEnabled() && !opts.NoCache && !opts.DryRun {
+			cacheKey := makeCacheKey(cacheKeyInput{
+				TaskName:    taskName,
+				Task:        task,
+				ResolvedCmd: resolved,
+				Params:      paramValues,
+				Env:         interpolateEnv(task.Env, paramValues, r.cfg.Vars, r.cfg.Templates),
+				WorkDir:     r.resolveTaskDir(task),
+				Profile:     os.Getenv("QP_PROFILE"),
+				ExtraEnv:    opts.Env,
+			})
+			if cached, ok := readCachedResult(r.repoRoot, cacheKey); ok {
+				cached.Cached = true
+				if cached.Stdout != "" && opts.Stdout != nil {
+					_, _ = io.WriteString(opts.Stdout, cached.Stdout)
+				}
+				if cached.Stderr != "" && opts.Stderr != nil {
+					_, _ = io.WriteString(opts.Stderr, cached.Stderr)
+				}
+				if opts.Events != nil {
+					opts.Events.EmitSkipped(taskName, "cache hit")
+				}
+				return cached, nil
+			}
+			outcome, err := r.runCommand(ctx, stepName, task, resolved, opts, "")
+			if err != nil {
+				return Result{}, err
+			}
+			result := Result{
+				Task:        taskName,
+				Type:        "cmd",
+				Needs:       needs,
+				ResolvedCmd: strPtr(resolved),
+				Status:      outcome.status,
+				ExitCode:    outcome.exitCode,
+				Stdout:      outcome.stdout,
+				Stderr:      outcome.stderr,
+				Errors:      extractErrors(task.ErrorFormat, outcome.stderr),
+				DurationMS:  outcome.finished.Sub(outcome.started).Milliseconds(),
+				StartedAt:   outcome.started.UTC().Format(time.RFC3339),
+				FinishedAt:  outcome.finished.UTC().Format(time.RFC3339),
+			}
+			if result.Status == StatusPass {
+				writeCachedResult(r.repoRoot, cacheKey, result)
+			}
+			if opts.Events != nil {
+				opts.Events.EmitDone(taskName, result.Status, result.DurationMS)
+			}
+			return result, nil
+		}
 		outcome, err := r.runCommand(ctx, stepName, task, resolved, opts, "")
 		if err != nil {
 			return Result{}, err

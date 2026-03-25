@@ -42,6 +42,7 @@ func runList(args []string, stdout, stderr *os.File) int {
 			Name:    name,
 			Desc:    task.Desc,
 			Type:    task.Type(),
+			Cache:   task.CacheEnabled(),
 			Agent:   task.AgentEnabled(),
 			Safety:  task.SafetyLevel(),
 			Default: isDefaultTask(cfg, name),
@@ -211,6 +212,7 @@ func runWatchTarget(target string, allowUnsafe bool, stdout, stderr *os.File) er
 		}
 		taskRunner := runner.New(cfg, repoRoot)
 		report, err := guard.New(cfg, repoRoot, taskRunner).Run(guardName, runner.Options{
+			NoCache:     true,
 			AllowUnsafe: allowUnsafe,
 			Stdout:      stdout,
 			Stderr:      stderr,
@@ -223,6 +225,7 @@ func runWatchTarget(target string, allowUnsafe bool, stdout, stderr *os.File) er
 	}
 
 	result, err := runner.New(cfg, repoRoot).Run(target, runner.Options{
+		NoCache:     true,
 		AllowUnsafe: allowUnsafe,
 		Stdout:      stdout,
 		Stderr:      stderr,
@@ -266,6 +269,7 @@ func runTask(args []string, stdout, stderr *os.File) int {
 	fs.SetOutput(stderr)
 	jsonOut := fs.Bool("json", false, "")
 	dryRun := fs.Bool("dry-run", false, "")
+	noCache := fs.Bool("no-cache", false, "")
 	allowUnsafe := fs.Bool("allow-unsafe", false, "")
 	eventsOut := fs.Bool("events", false, "")
 	if err := fs.Parse(taskArgs); err != nil {
@@ -285,6 +289,7 @@ func runTask(args []string, stdout, stderr *os.File) int {
 	result, err := runner.New(cfg, repoRoot).Run(resolvedTaskName, runner.Options{
 		JSON:        *jsonOut,
 		DryRun:      *dryRun,
+		NoCache:     *noCache,
 		AllowUnsafe: *allowUnsafe,
 		Stdout:      stdout,
 		Stderr:      stderr,

@@ -572,6 +572,34 @@ Profile selection currently uses environment variable:
 QP_PROFILE=prod qp deploy
 ```
 
+## Task Caching and Skip
+
+`qp` now supports opt-in task result caching for command tasks.
+
+Enable per task:
+
+```yaml
+tasks:
+  test:
+    desc: Run tests
+    cmd: go test ./...
+    cache: true
+```
+
+Behavior:
+
+- cache storage is local: `.qp/cache/`
+- cache currently applies to `cmd` tasks only
+- cache key includes task config, resolved command, params, env overlays, working dir, and selected profile
+- on cache hit, command execution is skipped and cached stdout/stderr is replayed
+
+Bypass cache for a run:
+
+```bash
+qp test --no-cache
+qp guard --no-cache
+```
+
 ## Task Dependencies
 
 Use `needs` when one task should depend on another task but still remain its own command or pipeline.

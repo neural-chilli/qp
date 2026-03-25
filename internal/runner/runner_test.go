@@ -453,6 +453,67 @@ func TestRunCmdTaskInterpolatesVarsAndTemplates(t *testing.T) {
 	}
 }
 
+func TestRunCmdTaskUsesCacheWhenEnabled(t *testing.T) {
+	t.Parallel()
+
+	repoRoot := t.TempDir()
+	enabled := true
+	r := New(&config.Config{Tasks: map[string]config.Task{
+		"cache-test": {
+			Desc:  "cache test",
+			Cmd:   `if [ -f marker.txt ]; then printf second; else printf first; touch marker.txt; fi`,
+			Cache: &enabled,
+		},
+	}}, repoRoot)
+
+	first, err := r.Run("cache-test", Options{Stdout: io.Discard, Stderr: io.Discard})
+	if err != nil {
+		t.Fatalf("first Run() error = %v", err)
+	}
+	if first.Stdout != "first" {
+		t.Fatalf("first stdout = %q, want first", first.Stdout)
+	}
+
+	second, err := r.Run("cache-test", Options{Stdout: io.Discard, Stderr: io.Discard})
+	if err != nil {
+		t.Fatalf("second Run() error = %v", err)
+	}
+	if second.Stdout != "first" {
+		t.Fatalf("second stdout = %q, want cached first", second.Stdout)
+	}
+	if !second.Cached {
+		t.Fatal("second result not marked cached")
+	}
+}
+
+func TestRunCmdTaskNoCacheBypassesCache(t *testing.T) {
+	t.Parallel()
+
+	repoRoot := t.TempDir()
+	enabled := true
+	r := New(&config.Config{Tasks: map[string]config.Task{
+		"cache-test": {
+			Desc:  "cache test",
+			Cmd:   `if [ -f marker.txt ]; then printf second; else printf first; touch marker.txt; fi`,
+			Cache: &enabled,
+		},
+	}}, repoRoot)
+
+	if _, err := r.Run("cache-test", Options{Stdout: io.Discard, Stderr: io.Discard}); err != nil {
+		t.Fatalf("first Run() error = %v", err)
+	}
+	second, err := r.Run("cache-test", Options{Stdout: io.Discard, Stderr: io.Discard, NoCache: true})
+	if err != nil {
+		t.Fatalf("second Run() error = %v", err)
+	}
+	if second.Stdout != "second" {
+		t.Fatalf("second stdout = %q, want second", second.Stdout)
+	}
+	if second.Cached {
+		t.Fatal("second result unexpectedly marked cached")
+	}
+}
+
 func TestRunTaskWhenCanUseVars(t *testing.T) {
 	t.Parallel()
 

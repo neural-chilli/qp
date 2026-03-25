@@ -27,12 +27,12 @@ Depth legend:
 | Variables | Partial | Top-level `vars` supported in task command/env interpolation and CEL eval context (`vars` / `var`). |
 | Templates | Partial | Top-level `templates` string snippets supported via `{{template.<name>}}` interpolation. |
 | Profiles | Partial | Top-level `profiles` overlays for vars and task `when`/`timeout`/`env`; selected via `QP_PROFILE`. |
+| Task Caching / Skip | Partial | Opt-in `cache: true` for cmd tasks; local cache in `.qp/cache`; runtime bypass via `--no-cache`; cache-hit surfaced via skip/event signals. |
 
 ## In Progress / Not Yet
 
 | Feature | Status |
 |---|---|
-| Task Caching / Skip | Not started |
 | Harness Engineering Support | Not started |
 | Scaffolding (harness-focused) | Not started |
 | LLM Node Type | Not started |

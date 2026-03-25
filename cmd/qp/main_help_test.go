@@ -57,7 +57,7 @@ func TestRunHelpForTask(t *testing.T) {
 	if !strings.Contains(output, "Safety: idempotent") {
 		t.Fatalf("stdout = %q, want safety", output)
 	}
-	if !strings.Contains(output, "Usage: qp check [--dry-run] [--allow-unsafe] [--events] [--json]") {
+	if !strings.Contains(output, "Usage: qp check [--dry-run] [--no-cache] [--allow-unsafe] [--events] [--json]") {
 		t.Fatalf("stdout = %q, want usage", output)
 	}
 	if !strings.Contains(output, "Steps:\n- test\n- build") {
@@ -118,7 +118,7 @@ aliases:
 	if !strings.Contains(output, "Aliases: b") {
 		t.Fatalf("stdout = %q, want aliases list", output)
 	}
-	if !strings.Contains(output, "Usage: qp b [--dry-run] [--allow-unsafe] [--events] [--json]") {
+	if !strings.Contains(output, "Usage: qp b [--dry-run] [--no-cache] [--allow-unsafe] [--events] [--json]") {
 		t.Fatalf("stdout = %q, want alias usage", output)
 	}
 }
@@ -190,7 +190,7 @@ tasks:
 		t.Fatalf("run(help build) code = %d, want 0; stderr=%s", code, readStderr())
 	}
 	output := readStdout()
-	for _, want := range []string{"Usage: qp build <target> [<files...>] [--dry-run] [--allow-unsafe] [--events] [--json]", "positional[1]", "positional[2...]"} {
+	for _, want := range []string{"Usage: qp build <target> [<files...>] [--dry-run] [--no-cache] [--allow-unsafe] [--events] [--json]", "positional[1]", "positional[2...]"} {
 		if !strings.Contains(output, want) {
 			t.Fatalf("stdout = %q, want %q", output, want)
 		}

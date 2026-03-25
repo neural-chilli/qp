@@ -49,6 +49,7 @@ type Task struct {
 	Steps           []string          `yaml:"steps"`
 	Run             string            `yaml:"run"`
 	When            string            `yaml:"when"`
+	Cache           *bool             `yaml:"cache"`
 	Needs           []string          `yaml:"needs"`
 	Parallel        bool              `yaml:"parallel"`
 	Params          map[string]Param  `yaml:"params"`
@@ -174,6 +175,10 @@ func (s *Scope) UnmarshalYAML(value *yaml.Node) error {
 
 func (t Task) AgentEnabled() bool {
 	return t.Agent == nil || *t.Agent
+}
+
+func (t Task) CacheEnabled() bool {
+	return t.Cache != nil && *t.Cache
 }
 
 func (t Task) SafetyLevel() string {

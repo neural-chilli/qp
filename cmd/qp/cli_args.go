@@ -98,7 +98,7 @@ func parseDirectParam(arg string, args []string, index int, task config.Task) (s
 	}
 
 	nameValue := strings.TrimPrefix(arg, "--")
-	if nameValue == "json" || nameValue == "dry-run" || nameValue == "allow-unsafe" || nameValue == "events" {
+	if nameValue == "json" || nameValue == "dry-run" || nameValue == "allow-unsafe" || nameValue == "events" || nameValue == "no-cache" {
 		return "", "", false, nil
 	}
 
