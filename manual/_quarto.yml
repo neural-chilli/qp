@@ -17,8 +17,6 @@ website:
         text: Getting Started
       - href: cookbook/index.qmd
         text: Cookbook
-      - href: ../README.md
-        text: README
   sidebar:
     style: "docked"
     search: true
