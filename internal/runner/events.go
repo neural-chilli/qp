@@ -97,6 +97,36 @@ func (s *EventStream) EmitComplete(status string, durationMS int64) {
 	})
 }
 
+func (s *EventStream) EmitIteration(task string, iteration int, max int, status string) {
+	payload := map[string]any{
+		"type":      "iteration",
+		"task":      task,
+		"iteration": iteration,
+	}
+	if max > 0 {
+		payload["max"] = max
+	}
+	if status != "" {
+		payload["status"] = status
+	}
+	s.emit(payload)
+}
+
+func (s *EventStream) EmitApprovalRequired(task string, reason string, metadata map[string]any) {
+	payload := map[string]any{
+		"type":   "approval_required",
+		"task":   task,
+		"reason": reason,
+	}
+	for key, value := range metadata {
+		if key == "type" || key == "task" || key == "reason" || key == "ts" {
+			continue
+		}
+		payload[key] = value
+	}
+	s.emit(payload)
+}
+
 func eventTS() string {
 	return time.Now().UTC().Format("2006-01-02T15:04:05.000Z07:00")
 }

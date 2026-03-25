@@ -426,6 +426,8 @@ For task and guard execution, `--events` emits:
 - `done`
 - `skipped`
 - `complete`
+- `iteration` (for loop/retry style nodes)
+- `approval_required` (for approval gate nodes)
 
 When `env_file` is configured, `--events` mode also prints a one-line stderr note such as `loaded 3 vars from .env` before task execution.
 
