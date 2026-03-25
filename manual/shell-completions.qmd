@@ -1,0 +1,72 @@
+---
+title: "Shell Completions"
+---
+
+`qp` supports shell completion for:
+
+- bash
+- zsh
+- fish
+- PowerShell
+
+## Print Completion Script
+
+Generate scripts directly:
+
+```bash
+qp completion bash
+qp completion zsh
+qp completion fish
+qp completion powershell
+```
+
+Useful when you want manual control over install location.
+
+## Automatic Install
+
+Best-effort install:
+
+```bash
+qp completion install
+```
+
+Explicit shell:
+
+```bash
+qp completion install --shell zsh
+qp completion install --shell powershell
+```
+
+Installer prints:
+
+1. installed file paths
+2. shell reload hint
+
+## Where Files Are Installed
+
+- bash: `~/.local/share/bash-completion/completions/qp` + managed block in `~/.bashrc`
+- zsh: `~/.zsh/completions/_qp` + managed block in `~/.zshrc`
+- fish: `~/.config/fish/completions/qp.fish`
+- PowerShell: `~/Documents/PowerShell/qp-completion.ps1` + managed block in profile script
+
+## Troubleshooting
+
+1. Restart shell after install (or source rc/profile file).
+2. Ensure `qp` binary is on `PATH`.
+3. If shell detection fails, use `--shell <name>`.
+4. Re-run install after upgrading `qp` if completions look stale.
+
+## Completion Coverage
+
+Completion supports:
+
+- top-level commands and flags
+- task + alias names
+- task invocation flags (`--json`, `--dry-run`, `--var`, `--profile`, etc.)
+- scoped command flags (for `context`, `plan`, `guard`, `watch`, and more)
+
+This keeps advanced workflows discoverable without memorizing every flag.
+
+## Next Step
+
+For schema and config validation workflows, continue to [Schema and Validation](schema-and-validation.qmd).

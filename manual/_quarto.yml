@@ -47,6 +47,7 @@ website:
           - init-and-scaffolding.qmd
           - architecture.qmd
           - watch.qmd
+          - shell-completions.qmd
           - tasks-and-params.qmd
           - dags.qmd
           - expressions.qmd

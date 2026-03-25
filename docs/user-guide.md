@@ -93,6 +93,7 @@ If you prefer a browsable multi-page manual with search, left navigation, and ri
 - [Init and scaffolding](../manual/init-and-scaffolding.qmd)
 - [Architecture checks](../manual/architecture.qmd)
 - [Watch](../manual/watch.qmd)
+- [Shell completions](../manual/shell-completions.qmd)
 
 ## Windows Daemon Mode
 
