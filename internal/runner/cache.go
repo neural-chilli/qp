@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path"
@@ -45,16 +46,19 @@ func readCachedResult(repoRoot, key string) (Result, bool) {
 	return result, true
 }
 
-func writeCachedResult(repoRoot, key string, result Result) {
+func writeCachedResult(repoRoot, key string, result Result) error {
 	dir := filepath.Join(repoRoot, ".qp", "cache")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return
+		return fmt.Errorf("create cache dir: %w", err)
 	}
 	raw, err := json.Marshal(result)
 	if err != nil {
-		return
+		return fmt.Errorf("marshal cache result: %w", err)
 	}
-	_ = os.WriteFile(filepath.Join(dir, key+".json"), raw, 0o644)
+	if err := os.WriteFile(filepath.Join(dir, key+".json"), raw, 0o644); err != nil {
+		return fmt.Errorf("write cache file: %w", err)
+	}
+	return nil
 }
 
 func hashCachePaths(repoRoot string, patterns []string) (string, error) {

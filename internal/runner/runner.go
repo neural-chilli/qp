@@ -232,7 +232,9 @@ func (r *Runner) runTask(ctx context.Context, taskName string, opts Options) (Re
 				return Result{}, err
 			}
 			if result.Status == StatusPass {
-				writeCachedResult(r.repoRoot, cacheKey, result)
+				if err := writeCachedResult(r.repoRoot, cacheKey, result); err != nil && opts.Stderr != nil {
+					_, _ = fmt.Fprintf(opts.Stderr, "[qp] warning: cache write failed for %s: %v\n", taskName, err)
+				}
 			}
 			return result, nil
 		}
