@@ -236,6 +236,46 @@ codemap:
 	}
 }
 
+func TestRunInitCodemapInfersPackages(t *testing.T) {
+	dir := t.TempDir()
+	srcDir := filepath.Join(dir, "internal", "app")
+	if err := os.MkdirAll(srcDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(srcDir, "app.go"), []byte(`package app
+
+// Package app coordinates startup.
+type Service struct{}
+
+func New() *Service { return &Service{} }
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	restore := chdirForTest(t, dir)
+	defer restore()
+
+	stdout, readStdout := tempOutputFile(t)
+	stderr, readStderr := tempOutputFile(t)
+
+	code := run([]string{"init", "--codemap"}, stdout, stderr)
+	if code != 0 {
+		t.Fatalf("run(init --codemap) code = %d, want 0; stderr=%s", code, readStderr())
+	}
+	if got := readStdout(); !strings.Contains(got, "added inferred codemap packages") {
+		t.Fatalf("stdout = %q, want codemap status message", got)
+	}
+	cfgRaw, err := os.ReadFile(filepath.Join(dir, "qp.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg := string(cfgRaw)
+	for _, want := range []string{"codemap:", "packages:", "internal/app"} {
+		if !strings.Contains(cfg, want) {
+			t.Fatalf("qp.yaml = %q, want %q", cfg, want)
+		}
+	}
+}
+
 func TestRunContextAboutJSON(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "qp.yaml"), []byte(`

@@ -107,7 +107,8 @@ func runInit(args []string, stdout, stderr *os.File) int {
 	fromRepo := fs.Bool("from-repo", false, "")
 	docs := fs.Bool("docs", false, "")
 	harness := fs.Bool("harness", false, "")
-	parsedArgs, err := parseSubcommandArgs(args, map[string]bool{"--from-repo": false, "--docs": false, "--harness": false})
+	codemap := fs.Bool("codemap", false, "")
+	parsedArgs, err := parseSubcommandArgs(args, map[string]bool{"--from-repo": false, "--docs": false, "--harness": false, "--codemap": false})
 	if err != nil {
 		printError(stderr, err)
 		return 2
@@ -126,6 +127,7 @@ func runInit(args []string, stdout, stderr *os.File) int {
 		FromRepo: *fromRepo,
 		Docs:     *docs,
 		Harness:  *harness,
+		Codemap:  *codemap,
 	})
 	if err != nil {
 		printError(stderr, err)

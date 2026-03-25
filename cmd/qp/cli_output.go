@@ -32,7 +32,7 @@ func printUsage(stdout *os.File) {
 		"qp repair [name] [--json] [--copy]",
 		"qp run <task> [task-flags]",
 		"qp setup [--windows]",
-		"qp init [--from-repo] [--docs] [--harness]",
+		"qp init [--from-repo] [--docs] [--harness] [--codemap]",
 		"qp list [--json]",
 		"qp watch <target> [--path <glob>]",
 		"qp prompt <name> [--copy]",

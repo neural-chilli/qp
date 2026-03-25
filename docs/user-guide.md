@@ -123,6 +123,14 @@ If you also want repo-specific human and agent docs generated from `qp.yaml`:
 qp init --docs
 ```
 
+If you want a starter codemap inferred from source files:
+
+```bash
+qp init --codemap
+```
+
+That appends a generated `codemap.packages` block into `qp.yaml` for review and refinement.
+
 If you want a harness-oriented starter with architecture guardrails from day one:
 
 ```bash

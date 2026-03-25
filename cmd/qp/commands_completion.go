@@ -137,7 +137,7 @@ func completionCandidates(args []string, cfg any) []string {
 	case "watch":
 		return filterCompletionCandidates(watchCandidates(rest, configValue), current)
 	case "init":
-		return filterCompletionCandidates([]string{"--from-repo", "--docs", "--harness"}, current)
+		return filterCompletionCandidates([]string{"--from-repo", "--docs", "--harness", "--codemap"}, current)
 	case "list":
 		return filterCompletionCandidates([]string{"--json"}, current)
 	case "validate", "version", "diff-plan":

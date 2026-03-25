@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/neural-chilli/qp/internal/codemap"
 	"github.com/neural-chilli/qp/internal/config"
 )
 
@@ -12,6 +13,7 @@ type Options struct {
 	FromRepo bool
 	Docs     bool
 	Harness  bool
+	Codemap  bool
 }
 
 const starterConfigBase = `project: my-project
@@ -222,6 +224,17 @@ func Run(repoRoot string, opts Options) (string, error) {
 			return "", err
 		}
 		messages = append(messages, statuses...)
+	}
+	if opts.Codemap {
+		inferred, err := codemap.Infer(repoRoot)
+		if err != nil {
+			return "", err
+		}
+		status, err := mergeInferredCodemap(cfgPath, inferred)
+		if err != nil {
+			return "", err
+		}
+		messages = append(messages, status)
 	}
 
 	return strings.Join(messages, "\n"), nil
