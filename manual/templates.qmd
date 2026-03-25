@@ -1,0 +1,171 @@
+---
+title: "Templates"
+---
+
+Templates help you remove repetition in `qp.yaml`. `qp` supports both string snippets and parameterized task templates.
+
+## 1. String Snippet Templates
+
+Use snippet templates for repeated command fragments.
+
+```yaml
+templates:
+  docker_login: aws ecr get-login-password | docker login --username AWS --password-stdin {{vars.registry}}
+  common_flags: --log-level info --color always
+
+tasks:
+  publish:
+    desc: Publish container image
+    cmd: "{{template.docker_login}} && docker push {{vars.registry}}/{{vars.service}}:{{vars.git_sha}} {{template.common_flags}}"
+```
+
+This keeps tasks readable when shared fragments grow.
+
+## 2. Parameterized Task Templates
+
+Task templates generate task families from one blueprint.
+
+```yaml
+templates:
+  go-service:
+    params:
+      service:
+        type: string
+        required: true
+      package:
+        type: string
+        required: true
+    tasks:
+      build:
+        desc: Build service
+        cmd: go build -o bin/{{param.service}} ./cmd/{{param.service}}
+      test:
+        desc: Test service package
+        cmd: go test ./{{param.package}}/...
+      check:
+        desc: Verify service
+        steps: [build, test]
+```
+
+Instantiate with `use`:
+
+```yaml
+tasks:
+  auth:
+    desc: Auth service workflow
+    use: go-service
+    params:
+      service: auth
+      package: internal/auth
+
+  payments:
+    desc: Payments service workflow
+    use: go-service
+    params:
+      service: payments
+      package: internal/payments
+```
+
+Generated tasks include namespaced children such as:
+
+- `auth:build`
+- `auth:test`
+- `auth:check`
+- `payments:build`
+- `payments:test`
+- `payments:check`
+
+The parent task (`auth`, `payments`) becomes a pipeline entrypoint over generated children.
+
+## Template Task Overrides
+
+You can customize generated tasks per instance via `override.tasks`.
+
+```yaml
+tasks:
+  auth:
+    desc: Auth service workflow
+    use: go-service
+    params:
+      service: auth
+      package: internal/auth
+    override:
+      tasks:
+        test:
+          when: branch() == "main"
+          timeout: 10m
+          env:
+            GOFLAGS: -race
+```
+
+Current override fields are intentionally narrow:
+
+- `when`
+- `timeout`
+- `env`
+
+## Expansion Model
+
+Template expansion happens at config load time, before execution.
+
+Practical implications:
+
+1. `qp list` and `qp help` show generated task names.
+2. `needs` references inside templates are namespaced to the instance.
+3. Validation runs against expanded concrete tasks.
+
+## Worked Multi-Service Example
+
+```yaml
+vars:
+  registry: ghcr.io/acme
+  git_sha:
+    sh: git rev-parse --short HEAD
+
+templates:
+  service-release:
+    params:
+      service:
+        type: string
+        required: true
+    tasks:
+      build:
+        desc: Build image
+        cmd: docker build -t {{vars.registry}}/{{param.service}}:{{vars.git_sha}} ./services/{{param.service}}
+      push:
+        desc: Push image
+        needs: [build]
+        cmd: docker push {{vars.registry}}/{{param.service}}:{{vars.git_sha}}
+
+tasks:
+  api:
+    desc: API release workflow
+    use: service-release
+    params:
+      service: api
+
+  worker:
+    desc: Worker release workflow
+    use: service-release
+    params:
+      service: worker
+```
+
+```bash
+qp api
+qp worker:push
+```
+
+## When To Use Templates
+
+Use templates when:
+
+- the same task pattern repeats across packages/services
+- naming consistency matters
+- you want one place to evolve standard build/test/release behavior
+
+Avoid templates when only one task uses the pattern and readability would decrease.
+
+## Next Step
+
+To apply environment-specific overlays on top of variables and templates, continue to [Profiles](profiles.qmd).

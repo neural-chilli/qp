@@ -34,6 +34,7 @@ website:
           - groups-and-aliases.qmd
           - scopes.qmd
           - variables.qmd
+          - templates.qmd
           - tasks-and-params.qmd
           - dags.qmd
           - expressions.qmd
