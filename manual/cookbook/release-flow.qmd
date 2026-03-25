@@ -2,37 +2,92 @@
 title: "Cookbook: Release Flow"
 ---
 
+This recipe models a safe, profile-aware release with retries and explicit unsafe controls.
+
+## Scenario
+
+You want one release command that is strict in production but still testable locally.
+
+## `qp.yaml` Recipe
+
 ```yaml
 profiles:
   _default: "{{env.QP_PROFILE}}"
+  staging:
+    vars:
+      deploy_env: staging
   prod:
+    vars:
+      deploy_env: prod
     tasks:
       deploy:
         when: branch() == "main"
+        timeout: 30m
+
+vars:
+  deploy_env: local
 
 tasks:
   build:
     desc: Build release artifacts
     cmd: make dist
+    safety: idempotent
 
   publish:
-    desc: Publish release
-    cmd: ./scripts/publish.sh
+    desc: Publish artifacts
+    cmd: ./scripts/publish.sh --env {{vars.deploy_env}}
+    safety: external
     retry: 3
     retry_delay: 5s
     retry_backoff: exponential
 
   deploy:
     desc: Deploy release
-    cmd: ./scripts/deploy.sh
+    cmd: ./scripts/deploy.sh --env {{vars.deploy_env}}
+    safety: external
+    retry: 2
+    retry_delay: 10s
 
   release:
     desc: Release pipeline
     run: build -> publish -> deploy
 ```
 
-Run:
+## Run It
+
+Staging rehearsal:
 
 ```bash
-QP_PROFILE=prod qp release --events
+QP_PROFILE=staging qp release --allow-unsafe --events
 ```
+
+Production:
+
+```bash
+QP_PROFILE=prod qp release --allow-unsafe --events --json
+```
+
+`deploy` only runs on `main` in prod profile due to task-level profile override.
+
+## Guarding Releases
+
+Add a pre-release validation guard:
+
+```yaml
+guards:
+  release-ready:
+    steps: [check, build]
+```
+
+Then run:
+
+```bash
+qp guard release-ready --json && QP_PROFILE=prod qp release --allow-unsafe
+```
+
+## Why This Works Well
+
+1. Local/staging/prod share one graph with profile overlays.
+2. Publish/deploy retries absorb transient failures.
+3. Unsafe side effects require explicit opt-in.
+4. Event stream gives auditable release timeline.
