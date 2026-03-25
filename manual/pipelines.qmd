@@ -1,0 +1,156 @@
+---
+title: "Pipelines"
+---
+
+Pipelines let you compose multiple steps into one task using `steps:`. They are ideal when you want a clear ordered workflow with one task entry point.
+
+## Sequential Pipelines
+
+By default, `steps` run in order and stop on first failure.
+
+```yaml
+tasks:
+  lint:
+    desc: Lint code
+    cmd: golangci-lint run
+
+  test:
+    desc: Run unit tests
+    cmd: go test ./...
+
+  build:
+    desc: Build CLI
+    cmd: go build ./cmd/qp
+
+  check:
+    desc: Local verification
+    steps: [lint, test, build]
+```
+
+```bash
+qp check
+```
+
+If `test` fails, `build` is not executed.
+
+## Parallel Pipelines
+
+Set `parallel: true` to run sibling steps concurrently.
+
+```yaml
+tasks:
+  check-fast:
+    desc: Run independent checks in parallel
+    parallel: true
+    steps:
+      - lint
+      - test
+      - npm run typecheck
+```
+
+```bash
+qp check-fast
+```
+
+Parallel behavior is fail-fast for overall status: if any step fails, pipeline status is `fail`.
+
+## Nested Pipelines
+
+A pipeline step can call another pipeline task:
+
+```yaml
+tasks:
+  verify:
+    desc: Shared quality pipeline
+    steps: [lint, test]
+
+  release-check:
+    desc: Full release preflight
+    steps:
+      - verify
+      - build
+      - smoke
+```
+
+This keeps each pipeline focused while still enabling reuse.
+
+## `continue_on_error`
+
+`continue_on_error: true` applies to sequential pipelines and lets later steps run even if an earlier step fails.
+
+```yaml
+tasks:
+  diagnostics:
+    desc: Collect all failures in one run
+    continue_on_error: true
+    steps:
+      - lint
+      - test
+      - static-analysis
+```
+
+```bash
+qp diagnostics --json
+```
+
+Notes:
+
+1. Sequential mode: all steps run; pipeline result still reflects failures.
+2. Parallel mode: `continue_on_error` is currently ignored and a warning is emitted.
+
+## Inline Shell Steps
+
+Steps can be task names or inline shell commands:
+
+```yaml
+tasks:
+  package:
+    desc: Build and archive
+    steps:
+      - build
+      - mkdir -p dist
+      - tar -czf dist/qp.tgz bin/qp
+```
+
+Use inline commands for small glue logic; prefer named tasks for reusable behavior.
+
+## Pipelines vs `needs`
+
+Both compose work, but they solve different problems:
+
+| Feature | `steps` pipeline | `needs` dependency |
+|---|---|---|
+| Main command on parent task | No (pipeline is the task) | Yes (parent still runs its own `cmd`) |
+| Typical use | End-to-end workflows (`check`, `release`) | Precondition tasks before a command |
+| Structure | Ordered/parallel step list | Prerequisite list + final command |
+
+Example side-by-side:
+
+```yaml
+tasks:
+  verify:
+    desc: Pipeline style
+    steps: [lint, test]
+
+  build:
+    desc: Dependency style
+    needs: [lint, test]
+    cmd: go build ./cmd/qp
+```
+
+## Output Modes
+
+- `--verbose`: prints commands as they are executed.
+- `--quiet`: reduces human-oriented output.
+- `--json`: returns structured pipeline/step result objects.
+- `--events`: streams lifecycle/output events as NDJSON.
+
+```bash
+qp check --verbose
+qp check --json
+qp check --events 2> events.jsonl
+```
+
+## Next Step
+
+For graph-style flow control with branching and fan-out/fan-in semantics, continue to [DAGs and Run Expressions](dags.qmd).
