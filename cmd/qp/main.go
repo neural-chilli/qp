@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"runtime/debug"
 )
@@ -36,6 +37,12 @@ func run(args []string, stdout, stderr *os.File) int {
 	switch args[0] {
 	case "__complete":
 		return runComplete(args[1:], stdout, stderr)
+	case "__daemon":
+		if len(args) > 1 && args[1] == "serve" {
+			return runDaemonServe(stdout, stderr)
+		}
+		printError(stderr, fmt.Errorf("invalid daemon invocation"))
+		return 1
 	case "version":
 		return runVersion(args[1:], stdout, stderr)
 	case "completion":
@@ -70,6 +77,10 @@ func run(args []string, stdout, stderr *os.File) int {
 		return runValidate(args[1:], stdout, stderr)
 	case "repair":
 		return runRepair(args[1:], stdout, stderr)
+	case "daemon":
+		return runDaemon(args[1:], stdout, stderr)
+	case "setup":
+		return runSetup(args[1:], stdout, stderr)
 	default:
 		return runTask(args, stdout, stderr)
 	}

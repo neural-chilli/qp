@@ -146,6 +146,10 @@ func completionCandidates(args []string, cfg any) []string {
 		return filterCompletionCandidates([]string{"--task", "--diff", "--file", "--json", "--max-tokens"}, current)
 	case "completion":
 		return filterCompletionCandidates([]string{"bash", "zsh", "fish", "powershell", "install"}, current)
+	case "daemon":
+		return filterCompletionCandidates([]string{"start", "stop", "status", "restart"}, current)
+	case "setup":
+		return filterCompletionCandidates([]string{"--windows"}, current)
 	default:
 		return nil
 	}
@@ -157,6 +161,7 @@ func topLevelCandidates(cfg *config.Config) []string {
 		"agent-brief",
 		"completion",
 		"context",
+		"daemon",
 		"diff-plan",
 		"docs",
 		"explain",
@@ -168,6 +173,7 @@ func topLevelCandidates(cfg *config.Config) []string {
 		"prompt",
 		"repair",
 		"scope",
+		"setup",
 		"validate",
 		"version",
 		"watch",
