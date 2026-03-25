@@ -168,6 +168,7 @@ func completionCandidates(args []string, cfg any) []string {
 func topLevelCandidates(cfg *config.Config) []string {
 	candidates := []string{
 		"--no-color",
+		"--version",
 		"agent-brief",
 		"arch-check",
 		"cache",

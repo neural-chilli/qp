@@ -26,6 +26,23 @@ func TestRunCompleteSuggestsTopLevelCommandsAndTasks(t *testing.T) {
 	}
 }
 
+func TestRunCompleteSuggestsVersionFlag(t *testing.T) {
+	repoRoot := repoRootForTest(t)
+	restore := chdirForTest(t, repoRoot)
+	defer restore()
+
+	stdout, readStdout := tempOutputFile(t)
+	stderr, readStderr := tempOutputFile(t)
+
+	code := run([]string{"__complete", "--ver"}, stdout, stderr)
+	if code != 0 {
+		t.Fatalf("run(__complete --ver) code = %d, want 0; stderr=%s", code, readStderr())
+	}
+	if !strings.Contains(readStdout(), "--version") {
+		t.Fatalf("stdout = %q, want --version completion", readStdout())
+	}
+}
+
 func TestRunCompleteSuggestsArchCheckCommand(t *testing.T) {
 	repoRoot := repoRootForTest(t)
 	restore := chdirForTest(t, repoRoot)
