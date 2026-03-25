@@ -729,6 +729,28 @@ func TestRunTaskWhenCanUseOSVar(t *testing.T) {
 	}
 }
 
+func TestRunTaskWhenCanUseProfileFunction(t *testing.T) {
+	t.Setenv("QP_PROFILE", "prod")
+	repoRoot := t.TempDir()
+	r := New(&config.Config{
+		Tasks: map[string]config.Task{
+			"deploy": {
+				Desc: "deploy",
+				Cmd:  "echo deploy",
+				When: `profile() == "prod"`,
+			},
+		},
+	}, repoRoot)
+
+	result, err := r.Run("deploy", Options{Stdout: io.Discard, Stderr: io.Discard})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if result.Status != StatusPass {
+		t.Fatalf("Status = %q, want pass", result.Status)
+	}
+}
+
 func TestRunCmdTaskDirOverridesDefaultWorkingDir(t *testing.T) {
 	t.Parallel()
 

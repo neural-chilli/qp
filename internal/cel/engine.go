@@ -90,6 +90,16 @@ func (e *Engine) newEnv(vars map[string]any) (*celgo.Env, error) {
 				}),
 			),
 		),
+		celgo.Function("profile",
+			celgo.Overload(
+				"qp_profile_no_args",
+				[]*celgo.Type{},
+				celgo.StringType,
+				celgo.FunctionBinding(func(args ...ref.Val) ref.Val {
+					return types.String(profileValue(vars))
+				}),
+			),
+		),
 		celgo.Function("env",
 			celgo.Overload(
 				"qp_env_lookup",
@@ -132,4 +142,15 @@ func envValue(vars map[string]any, key string) string {
 		}
 	}
 	return ""
+}
+
+func profileValue(vars map[string]any) string {
+	if vars == nil {
+		return ""
+	}
+	value, ok := vars["profile"]
+	if !ok || value == nil {
+		return ""
+	}
+	return fmt.Sprint(value)
 }

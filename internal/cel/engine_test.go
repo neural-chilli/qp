@@ -87,3 +87,19 @@ func TestEvalSupportsEnvFunctionWithoutStringRewrite(t *testing.T) {
 		t.Fatalf("Eval() = %#v, want true", value)
 	}
 }
+
+func TestEvalSupportsProfileFunction(t *testing.T) {
+	t.Parallel()
+
+	engine := New()
+	value, err := engine.Eval(`profile() == "prod"`, map[string]any{
+		"profile": "prod",
+	})
+	if err != nil {
+		t.Fatalf("Eval() error = %v", err)
+	}
+	boolean, ok := value.(bool)
+	if !ok || !boolean {
+		t.Fatalf("Eval() = %#v, want true", value)
+	}
+}
