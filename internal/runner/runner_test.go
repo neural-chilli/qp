@@ -449,6 +449,49 @@ func TestRunTaskExpressionWhenChoosesFalseBranch(t *testing.T) {
 	}
 }
 
+func TestRunTaskExpressionSwitchChoosesMatchingCase(t *testing.T) {
+	t.Parallel()
+
+	repoRoot := t.TempDir()
+	r := New(&config.Config{Tasks: map[string]config.Task{
+		"build-api": {Desc: "build-api", Cmd: `printf api`},
+		"build-web": {Desc: "build-web", Cmd: `printf web`},
+		"flow":      {Desc: "flow", Run: `switch(param("target"), "api": build-api, "web": build-web)`},
+	}}, repoRoot)
+
+	result, err := r.Run("flow", Options{Stdout: io.Discard, Stderr: io.Discard, Params: map[string]string{"target": "web"}})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if result.Status != StatusPass {
+		t.Fatalf("Status = %q, want pass", result.Status)
+	}
+	if len(result.Steps) == 0 || result.Steps[0].Name != "switch:web" {
+		t.Fatalf("Steps = %+v, want switch:web", result.Steps)
+	}
+}
+
+func TestRunTaskExpressionSwitchSkipsWhenNoCaseMatches(t *testing.T) {
+	t.Parallel()
+
+	repoRoot := t.TempDir()
+	r := New(&config.Config{Tasks: map[string]config.Task{
+		"build-api": {Desc: "build-api", Cmd: `printf api`},
+		"flow":      {Desc: "flow", Run: `switch(param("target"), "api": build-api)`},
+	}}, repoRoot)
+
+	result, err := r.Run("flow", Options{Stdout: io.Discard, Stderr: io.Discard, Params: map[string]string{"target": "web"}})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if result.Status != StatusSkipped {
+		t.Fatalf("Status = %q, want skipped", result.Status)
+	}
+	if len(result.Steps) == 0 || result.Steps[0].Name != "switch" {
+		t.Fatalf("Steps = %+v, want switch skip step", result.Steps)
+	}
+}
+
 func TestRunCmdTaskInterpolatesVarsAndTemplates(t *testing.T) {
 	t.Parallel()
 

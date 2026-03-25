@@ -373,6 +373,7 @@ Supported operators:
 - `a -> b -> c` for sequence
 - `when(expr, if_true)` for conditional execution with skip fallback
 - `when(expr, if_true, if_false)` for explicit false branch
+- `switch(expr, "value": branch, "other": branch)` for multi-way branching
 
 If you omit `if_false`, the false path is skipped (that is the current default/fall-through behavior).
 

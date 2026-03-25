@@ -48,3 +48,22 @@ func TestParseRunExprWhenExpression(t *testing.T) {
 		}
 	}
 }
+
+func TestParseRunExprSwitchExpression(t *testing.T) {
+	t.Parallel()
+
+	expr, err := ParseRunExpr(`switch(env("TARGET"), "api": build-api -> deploy-api, "web": build-web)`)
+	if err != nil {
+		t.Fatalf("ParseRunExpr() error = %v", err)
+	}
+	refs := RunExprRefs(expr)
+	want := map[string]bool{"build-api": true, "deploy-api": true, "build-web": true}
+	if len(refs) != len(want) {
+		t.Fatalf("RunExprRefs() = %#v, want %#v", refs, want)
+	}
+	for _, ref := range refs {
+		if !want[ref] {
+			t.Fatalf("unexpected ref %q in %#v", ref, refs)
+		}
+	}
+}

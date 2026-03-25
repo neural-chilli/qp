@@ -36,6 +36,18 @@ type RunWhen struct {
 
 func (RunWhen) isRunExpr() {}
 
+type RunSwitchCase struct {
+	Value string
+	Expr  RunExpr
+}
+
+type RunSwitch struct {
+	Expr  string
+	Cases []RunSwitchCase
+}
+
+func (RunSwitch) isRunExpr() {}
+
 func ParseRunExpr(input string) (RunExpr, error) {
 	p := &runParser{input: input}
 	expr, err := p.parseExpr()
@@ -74,6 +86,10 @@ func RunExprRefs(expr RunExpr) []string {
 			}
 			if n.False != nil {
 				visit(n.False)
+			}
+		case RunSwitch:
+			for _, c := range n.Cases {
+				visit(c.Expr)
 			}
 		}
 	}
@@ -170,6 +186,50 @@ func (p *runParser) parseTerm() (RunExpr, error) {
 		}
 		return RunWhen{Expr: cond, True: trueExpr, False: falseExpr}, nil
 	}
+	if p.consumeSwitchKeyword() {
+		p.skipSpace()
+		if !p.consume("(") {
+			return nil, fmt.Errorf("expected '(' after switch")
+		}
+		cond, err := p.parseConditionArg()
+		if err != nil {
+			return nil, err
+		}
+		if !p.consume(",") {
+			return nil, fmt.Errorf("switch() requires condition and at least one case")
+		}
+		cases := []RunSwitchCase{}
+		for {
+			p.skipSpace()
+			if p.consume(")") {
+				break
+			}
+			value, err := p.parseStringLiteral()
+			if err != nil {
+				return nil, fmt.Errorf("switch() case value: %w", err)
+			}
+			p.skipSpace()
+			if !p.consume(":") {
+				return nil, fmt.Errorf("switch() case %q: expected ':'", value)
+			}
+			caseExpr, err := p.parseExpr()
+			if err != nil {
+				return nil, err
+			}
+			cases = append(cases, RunSwitchCase{Value: value, Expr: caseExpr})
+			p.skipSpace()
+			if p.consume(")") {
+				break
+			}
+			if !p.consume(",") {
+				return nil, fmt.Errorf("expected ',' or ')' in switch()")
+			}
+		}
+		if len(cases) == 0 {
+			return nil, fmt.Errorf("switch() requires at least one case")
+		}
+		return RunSwitch{Expr: cond, Cases: cases}, nil
+	}
 
 	name := p.parseIdentifier()
 	if name == "" {
@@ -200,6 +260,22 @@ func (p *runParser) consumeWhenKeyword() bool {
 		return false
 	}
 	next := p.pos + len("when")
+	if next < len(p.input) {
+		r := rune(p.input[next])
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || strings.ContainsRune("._/-", r) {
+			return false
+		}
+	}
+	p.pos = next
+	return true
+}
+
+func (p *runParser) consumeSwitchKeyword() bool {
+	p.skipSpace()
+	if !strings.HasPrefix(p.input[p.pos:], "switch") {
+		return false
+	}
+	next := p.pos + len("switch")
 	if next < len(p.input) {
 		r := rune(p.input[next])
 		if unicode.IsLetter(r) || unicode.IsDigit(r) || strings.ContainsRune("._/-", r) {
@@ -276,6 +352,38 @@ func (p *runParser) parseIdentifier() string {
 		return ""
 	}
 	return p.input[start:p.pos]
+}
+
+func (p *runParser) parseStringLiteral() (string, error) {
+	p.skipSpace()
+	if p.pos >= len(p.input) {
+		return "", fmt.Errorf("expected quoted string")
+	}
+	quote := p.input[p.pos]
+	if quote != '"' && quote != '\'' {
+		return "", fmt.Errorf("expected quoted string")
+	}
+	p.pos++
+	var out strings.Builder
+	escaped := false
+	for p.pos < len(p.input) {
+		ch := p.input[p.pos]
+		p.pos++
+		if escaped {
+			out.WriteByte(ch)
+			escaped = false
+			continue
+		}
+		if ch == '\\' {
+			escaped = true
+			continue
+		}
+		if ch == quote {
+			return out.String(), nil
+		}
+		out.WriteByte(ch)
+	}
+	return "", fmt.Errorf("unterminated string literal")
 }
 
 func (p *runParser) skipSpace() {

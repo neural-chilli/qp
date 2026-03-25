@@ -86,6 +86,37 @@ func (r *Runner) runExprNode(ctx context.Context, node config.RunExpr, opts Opti
 			StartedAt:  &startedAt,
 			FinishedAt: &finishedAt,
 		}, nil
+	case config.RunSwitch:
+		value, err := r.celEngine.Eval(n.Expr, r.celVars(opts))
+		if err != nil {
+			return StepResult{}, fmt.Errorf("switch(%s): %w", n.Expr, err)
+		}
+		resolved := fmt.Sprint(value)
+		for _, c := range n.Cases {
+			if c.Value != resolved {
+				continue
+			}
+			step, err := r.runExprNode(ctx, c.Expr, opts)
+			if err != nil {
+				return StepResult{}, err
+			}
+			step.Name = "switch:" + c.Value
+			return step, nil
+		}
+		started := time.Now()
+		finished := time.Now()
+		duration := finished.Sub(started).Milliseconds()
+		startedAt := started.UTC().Format(time.RFC3339)
+		finishedAt := finished.UTC().Format(time.RFC3339)
+		return StepResult{
+			Name:       "switch",
+			Status:     StatusSkipped,
+			ExitCode:   0,
+			SkipReason: fmt.Sprintf("switch had no matching case for value %q", resolved),
+			DurationMS: &duration,
+			StartedAt:  &startedAt,
+			FinishedAt: &finishedAt,
+		}, nil
 	default:
 		return StepResult{}, fmt.Errorf("unsupported run expression node")
 	}
@@ -222,6 +253,8 @@ func dagNodeName(node config.RunExpr) string {
 		return "par"
 	case config.RunWhen:
 		return "when"
+	case config.RunSwitch:
+		return "switch"
 	default:
 		return "step"
 	}
