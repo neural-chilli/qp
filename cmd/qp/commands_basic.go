@@ -148,7 +148,9 @@ func runGuard(args []string, stdout, stderr *os.File) int {
 	quiet := fs.Bool("quiet", false, "")
 	allowUnsafe := fs.Bool("allow-unsafe", false, "")
 	eventsOut := fs.Bool("events", false, "")
-	parsedArgs, err := parseSubcommandArgs(args, map[string]bool{"--json": false, "--no-cache": false, "--verbose": false, "--quiet": false, "--allow-unsafe": false, "--events": false})
+	var varFlags multiFlag
+	fs.Var(&varFlags, "var", "")
+	parsedArgs, err := parseSubcommandArgs(args, map[string]bool{"--json": false, "--no-cache": false, "--verbose": false, "--quiet": false, "--allow-unsafe": false, "--events": false, "--var": true})
 	if err != nil {
 		printError(stderr, err)
 		return 2
@@ -167,6 +169,12 @@ func runGuard(args []string, stdout, stderr *os.File) int {
 		printError(stderr, err)
 		return 1
 	}
+	cliVarOverrides, err := parseVarAssignments(varFlags)
+	if err != nil {
+		printError(stderr, err)
+		return 2
+	}
+	applyVarOverrides(cfg, cliVarOverrides)
 
 	taskRunner := runner.New(cfg, repoRoot)
 	var events *runner.EventStream

@@ -178,6 +178,87 @@ tasks:
 	}
 }
 
+func TestRunTaskSupportsCLIAndEnvVarOverridesWithPrecedence(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "qp.yaml"), []byte(`
+vars:
+  registry: yaml
+tasks:
+  deploy:
+    desc: Deploy
+    cmd: printf "{{vars.registry}}"
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	restore := chdirForTest(t, dir)
+	defer restore()
+	t.Setenv("QP_VAR_REGISTRY", "env")
+
+	stdout, readStdout := tempOutputFile(t)
+	stderr, readStderr := tempOutputFile(t)
+
+	code := run([]string{"deploy", "--var", "registry=cli"}, stdout, stderr)
+	if code != 0 {
+		t.Fatalf("run(deploy --var registry=cli) code = %d, want 0; stderr=%s", code, readStderr())
+	}
+	if got := readStdout(); !strings.Contains(got, "cli") {
+		t.Fatalf("stdout = %q, want CLI override value", got)
+	}
+}
+
+func TestRunTaskSupportsEnvVarOverride(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "qp.yaml"), []byte(`
+vars:
+  registry: yaml
+tasks:
+  deploy:
+    desc: Deploy
+    cmd: printf "{{vars.registry}}"
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	restore := chdirForTest(t, dir)
+	defer restore()
+	t.Setenv("QP_VAR_REGISTRY", "env")
+
+	stdout, readStdout := tempOutputFile(t)
+	stderr, readStderr := tempOutputFile(t)
+
+	code := run([]string{"deploy"}, stdout, stderr)
+	if code != 0 {
+		t.Fatalf("run(deploy) code = %d, want 0; stderr=%s", code, readStderr())
+	}
+	if got := readStdout(); !strings.Contains(got, "env") {
+		t.Fatalf("stdout = %q, want env override value", got)
+	}
+}
+
+func TestRunTaskRejectsInvalidVarFlag(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "qp.yaml"), []byte(`
+tasks:
+  deploy:
+    desc: Deploy
+    cmd: printf ok
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	restore := chdirForTest(t, dir)
+	defer restore()
+
+	stdout, _ := tempOutputFile(t)
+	stderr, readStderr := tempOutputFile(t)
+
+	code := run([]string{"deploy", "--var", "bad-format"}, stdout, stderr)
+	if code != 2 {
+		t.Fatalf("run(deploy --var bad-format) code = %d, want 2; stderr=%s", code, readStderr())
+	}
+	if got := readStderr(); !strings.Contains(got, "--var requires name=value") {
+		t.Fatalf("stderr = %q, want --var validation error", got)
+	}
+}
+
 func TestRunTaskAcceptsPositionalParams(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "qp.yaml"), []byte(`

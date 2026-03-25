@@ -553,7 +553,7 @@ build
 
 Description: Build the binary
 Aliases: b
-Usage: qp build --target <value> [--dry-run] [--allow-unsafe] [--events] [--json]
+Usage: qp build --target <value> [--var name=value] [--dry-run] [--verbose] [--quiet] [--no-cache] [--allow-unsafe] [--events] [--json]
 Type: cmd
 ```
 
@@ -655,6 +655,8 @@ tasks:
 Current support:
 
 - top-level `vars` values (static or shell-resolved)
+- runtime var overrides from environment variables with `QP_VAR_*`
+- runtime var overrides from CLI with `--var name=value`
 - top-level `templates` string snippets
 - top-level `profiles` with:
   - `vars` overrides
@@ -692,6 +694,19 @@ Profile selection currently uses environment variable:
 
 ```bash
 QP_PROFILE=prod qp deploy
+```
+
+Variable override precedence is:
+
+1. CLI `--var` values
+2. environment `QP_VAR_*` values
+3. YAML `vars` defaults
+
+Examples:
+
+```bash
+QP_VAR_REGISTRY=gcr.io/production qp deploy
+qp deploy --var registry=gcr.io/staging
 ```
 
 For shell-resolved vars:

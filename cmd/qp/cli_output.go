@@ -15,7 +15,7 @@ import (
 
 func printUsage(stdout *os.File) {
 	lines := []string{
-		"qp [--no-color] [<task>] [--name value] [--param name=value] [--dry-run] [--verbose] [--quiet] [--no-cache] [--allow-unsafe] [--events] [--json]",
+		"qp [--no-color] [<task>] [--name value] [--param name=value] [--var name=value] [--dry-run] [--verbose] [--quiet] [--no-cache] [--allow-unsafe] [--events] [--json]",
 		"If qp.yaml sets `default`, running `qp` with no task runs that task.",
 		"qp agent-brief [--task <name> | --diff | --file <path>...] [--json] [--max-tokens <approx-n>]",
 		"qp arch-check [--json]",
@@ -28,7 +28,7 @@ func printUsage(stdout *os.File) {
 		"qp help [task|group]",
 		"qp plan [--json] [--file <path>] [files...]",
 		"qp context [--agent] [--json] [--task <name>] [--about <topic>] [--out <file>] [--copy] [--max-tokens <approx-n>]",
-		"qp guard [name] [--json] [--verbose] [--quiet]",
+		"qp guard [name] [--json] [--verbose] [--quiet] [--var name=value]",
 		"qp repair [name] [--json] [--copy]",
 		"qp run <task> [task-flags]",
 		"qp setup [--windows]",
@@ -308,7 +308,7 @@ func taskUsage(name string, task config.Task) string {
 		}
 		parts = append(parts, "["+flag+"]")
 	}
-	parts = append(parts, "[--dry-run]", "[--verbose]", "[--quiet]", "[--no-cache]", "[--allow-unsafe]", "[--events]", "[--json]")
+	parts = append(parts, "[--var name=value]", "[--dry-run]", "[--verbose]", "[--quiet]", "[--no-cache]", "[--allow-unsafe]", "[--events]", "[--json]")
 	return strings.Join(parts, " ")
 }
 

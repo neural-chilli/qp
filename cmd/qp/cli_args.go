@@ -17,6 +17,18 @@ func parseTaskInvocation(args []string, task config.Task) ([]string, map[string]
 
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
+		if arg == "--var" {
+			if i+1 >= len(args) {
+				return nil, nil, fmt.Errorf("%s requires value", arg)
+			}
+			taskArgs = append(taskArgs, arg, args[i+1])
+			i++
+			continue
+		}
+		if strings.HasPrefix(arg, "--var=") {
+			taskArgs = append(taskArgs, arg)
+			continue
+		}
 		if arg == "--param" {
 			if i+1 >= len(args) {
 				return nil, nil, fmt.Errorf("--param requires name=value")
@@ -98,7 +110,7 @@ func parseDirectParam(arg string, args []string, index int, task config.Task) (s
 	}
 
 	nameValue := strings.TrimPrefix(arg, "--")
-	if nameValue == "json" || nameValue == "dry-run" || nameValue == "verbose" || nameValue == "quiet" || nameValue == "allow-unsafe" || nameValue == "events" || nameValue == "no-cache" {
+	if nameValue == "json" || nameValue == "dry-run" || nameValue == "verbose" || nameValue == "quiet" || nameValue == "allow-unsafe" || nameValue == "events" || nameValue == "no-cache" || nameValue == "var" {
 		return "", "", false, nil
 	}
 

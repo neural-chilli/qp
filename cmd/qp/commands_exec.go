@@ -274,9 +274,17 @@ func runTask(args []string, stdout, stderr *os.File) int {
 	noCache := fs.Bool("no-cache", false, "")
 	allowUnsafe := fs.Bool("allow-unsafe", false, "")
 	eventsOut := fs.Bool("events", false, "")
+	var varFlags multiFlag
+	fs.Var(&varFlags, "var", "")
 	if err := fs.Parse(taskArgs); err != nil {
 		return 2
 	}
+	cliVarOverrides, err := parseVarAssignments(varFlags)
+	if err != nil {
+		printError(stderr, err)
+		return 2
+	}
+	applyVarOverrides(cfg, cliVarOverrides)
 
 	var events *runner.EventStream
 	if *eventsOut {
@@ -339,6 +347,7 @@ func loadConfig() (*config.Config, string, error) {
 		}
 		return nil, "", err
 	}
+	applyVarOverrides(cfg, envVarOverridesFromEnviron(os.Environ()))
 	return cfg, repoRoot, nil
 }
 
