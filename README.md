@@ -1,7 +1,7 @@
 <table>
   <tr>
     <td width="200" valign="top">
-      <img src="./qp-logo.png" alt="Quickly Please logo" width="220">
+      <img src="./qp-logo-rounded.png" alt="Quickly Please logo" width="220">
     </td>
     <td valign="top">
       <h1>Quickly Please (qp)</h1>
