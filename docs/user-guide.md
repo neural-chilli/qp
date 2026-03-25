@@ -95,6 +95,7 @@ If you prefer a browsable multi-page manual with search, left navigation, and ri
 - [Watch](../manual/watch.qmd)
 - [Shell completions](../manual/shell-completions.qmd)
 - [Schema and validation](../manual/schema-and-validation.qmd)
+- [CLI reference](../manual/cli-reference.qmd)
 
 ## Windows Daemon Mode
 

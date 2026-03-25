@@ -1,0 +1,175 @@
+---
+title: "CLI Reference"
+---
+
+This page is a quick command index for `qp`.
+
+## Global Invocation
+
+```text
+qp [--no-color] [<task>] [task-args...]
+```
+
+Top-level flags:
+
+- `--version`
+- `--no-color`
+
+## Core Task Execution
+
+### Run task by name (or alias)
+
+```bash
+qp check
+qp b --target api
+```
+
+Common task flags:
+
+- `--json`
+- `--dry-run`
+- `--verbose`
+- `--quiet`
+- `--no-cache`
+- `--allow-unsafe`
+- `--events`
+- `--var name=value`
+- `--profile name`
+
+### Explicit run command
+
+```bash
+qp run check --json
+```
+
+## Discovery and Help
+
+```bash
+qp list
+qp list --json
+qp help
+qp help check
+qp help quality
+```
+
+## Validation and Config
+
+```bash
+qp validate
+qp validate --json
+qp validate --suggest
+```
+
+```bash
+qp scope cli
+qp scope cli --json
+qp scope cli --format prompt
+qp scope --coverage --json
+```
+
+## Planning and Context
+
+```bash
+qp plan --file cmd/qp/main.go
+qp plan --json --file internal/runner/runner.go
+qp diff-plan
+qp diff-plan --json
+```
+
+```bash
+qp context
+qp context --agent --task check
+qp context --about "release flow"
+qp context --json --about "architecture"
+```
+
+```bash
+qp agent-brief --task check
+qp agent-brief --diff --max-tokens 2500
+qp agent-brief --json --file internal/config/config.go
+```
+
+## Guard and Repair
+
+```bash
+qp guard
+qp guard ci --json
+qp guard ci --events
+```
+
+```bash
+qp repair
+qp repair ci --brief
+qp repair ci --json
+qp repair ci --copy
+```
+
+## Architecture and Explain
+
+```bash
+qp arch-check
+qp arch-check --json
+```
+
+```bash
+qp explain check
+qp explain internal/runner
+qp explain guard --json
+```
+
+## Caching
+
+```bash
+qp cache status
+qp cache status --json
+qp cache clean
+qp cache clean --all --json
+```
+
+## Init and Docs
+
+```bash
+qp init
+qp init --from-repo --docs --codemap
+qp docs
+qp docs --list
+qp docs user-guide
+```
+
+## Watch
+
+```bash
+qp watch check
+qp watch guard:ci --path internal --path cmd
+qp watch check --allow-unsafe
+```
+
+## Completion
+
+```bash
+qp completion bash
+qp completion install
+qp completion install --shell zsh
+```
+
+## Daemon and Setup
+
+```bash
+qp daemon start
+qp daemon status
+qp daemon restart
+qp daemon stop
+qp setup --windows
+```
+
+## Version
+
+```bash
+qp version
+qp version --json
+qp --version
+```
+
+## Next Step
+
+For scenario-driven applied patterns, continue to the [Cookbook](cookbook/index.qmd).

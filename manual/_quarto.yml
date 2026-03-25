@@ -49,6 +49,7 @@ website:
           - watch.qmd
           - shell-completions.qmd
           - schema-and-validation.qmd
+          - cli-reference.qmd
           - tasks-and-params.qmd
           - dags.qmd
           - expressions.qmd
