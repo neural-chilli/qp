@@ -227,56 +227,16 @@ func (r *Runner) runTask(ctx context.Context, taskName string, opts Options) (Re
 					return cached, nil
 				}
 			}
-			outcome, err := r.runCommandWithRetry(ctx, stepName, task, resolved, opts, "")
+			result, err := r.executeCommandTask(ctx, taskName, stepName, task, resolved, paramValues, needs, opts)
 			if err != nil {
 				return Result{}, err
-			}
-			outcome = r.runDeferredCommand(ctx, stepName, task, paramValues, opts, outcome)
-			result := Result{
-				Task:        taskName,
-				Type:        "cmd",
-				Needs:       needs,
-				ResolvedCmd: visibleResolvedCmd(task, resolved),
-				Status:      outcome.status,
-				ExitCode:    outcome.exitCode,
-				Stdout:      outcome.stdout,
-				Stderr:      outcome.stderr,
-				Errors:      extractErrors(task.ErrorFormat, outcome.stderr),
-				DurationMS:  outcome.finished.Sub(outcome.started).Milliseconds(),
-				StartedAt:   outcome.started.UTC().Format(time.RFC3339),
-				FinishedAt:  outcome.finished.UTC().Format(time.RFC3339),
 			}
 			if result.Status == StatusPass {
 				writeCachedResult(r.repoRoot, cacheKey, result)
 			}
-			if opts.Events != nil {
-				opts.Events.EmitDone(taskName, result.Status, result.DurationMS)
-			}
 			return result, nil
 		}
-		outcome, err := r.runCommandWithRetry(ctx, stepName, task, resolved, opts, "")
-		if err != nil {
-			return Result{}, err
-		}
-		outcome = r.runDeferredCommand(ctx, stepName, task, paramValues, opts, outcome)
-		result := Result{
-			Task:        taskName,
-			Type:        "cmd",
-			Needs:       needs,
-			ResolvedCmd: visibleResolvedCmd(task, resolved),
-			Status:      outcome.status,
-			ExitCode:    outcome.exitCode,
-			Stdout:      outcome.stdout,
-			Stderr:      outcome.stderr,
-			Errors:      extractErrors(task.ErrorFormat, outcome.stderr),
-			DurationMS:  outcome.finished.Sub(outcome.started).Milliseconds(),
-			StartedAt:   outcome.started.UTC().Format(time.RFC3339),
-			FinishedAt:  outcome.finished.UTC().Format(time.RFC3339),
-		}
-		if opts.Events != nil {
-			opts.Events.EmitDone(taskName, result.Status, result.DurationMS)
-		}
-		return result, nil
+		return r.executeCommandTask(ctx, taskName, stepName, task, resolved, paramValues, needs, opts)
 	}
 	if task.Run != "" {
 		result, err := r.runFromExpression(ctx, taskName, task, needs, started, opts)
@@ -316,6 +276,32 @@ func hasFreshDependency(needs []Result) bool {
 		}
 	}
 	return false
+}
+
+func (r *Runner) executeCommandTask(ctx context.Context, taskName, stepName string, task config.Task, resolved string, paramValues map[string]string, needs []Result, opts Options) (Result, error) {
+	outcome, err := r.runCommandWithRetry(ctx, stepName, task, resolved, opts, "")
+	if err != nil {
+		return Result{}, err
+	}
+	outcome = r.runDeferredCommand(ctx, stepName, task, paramValues, opts, outcome)
+	result := Result{
+		Task:        taskName,
+		Type:        "cmd",
+		Needs:       needs,
+		ResolvedCmd: visibleResolvedCmd(task, resolved),
+		Status:      outcome.status,
+		ExitCode:    outcome.exitCode,
+		Stdout:      outcome.stdout,
+		Stderr:      outcome.stderr,
+		Errors:      extractErrors(task.ErrorFormat, outcome.stderr),
+		DurationMS:  outcome.finished.Sub(outcome.started).Milliseconds(),
+		StartedAt:   outcome.started.UTC().Format(time.RFC3339),
+		FinishedAt:  outcome.finished.UTC().Format(time.RFC3339),
+	}
+	if opts.Events != nil {
+		opts.Events.EmitDone(taskName, result.Status, result.DurationMS)
+	}
+	return result, nil
 }
 
 func hasFreshStep(steps []StepResult) bool {
