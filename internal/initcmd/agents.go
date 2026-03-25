@@ -70,6 +70,8 @@ func renderAgentDoc(name string, cfg *config.Config) string {
 	}
 	builder.WriteString("# " + name + "\n\n")
 	builder.WriteString("This file is generated from `qp.yaml` and is the repo-specific workflow guide for coding agents.\n\n")
+	builder.WriteString("## One Command\n\n")
+	builder.WriteString(fmt.Sprintf("Run `%s` after making changes to verify the repo state before reporting completion.\n\n", goldenCommand))
 	builder.WriteString("## Agent Conventions\n\n")
 	builder.WriteString(fmt.Sprintf("- Always run `%s` before reporting work as complete.\n", goldenCommand))
 	builder.WriteString("- Always prefer an existing `qp` task over ad hoc shell commands.\n")

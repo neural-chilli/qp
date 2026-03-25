@@ -164,6 +164,8 @@ func TestRenderAgentDocIncludesKnowledgeAccrualGuidance(t *testing.T) {
 
 	got := renderAgentDoc("AGENTS", cfg)
 	for _, want := range []string{
+		"## One Command",
+		"Run `qp guard` after making changes",
 		"## Agent Conventions",
 		"Always run `qp guard` before reporting work as complete.",
 		"## Knowledge Accrual",

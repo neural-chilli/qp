@@ -142,6 +142,7 @@ The generated agent docs include:
 - scopes and prompts
 - context and watch configuration highlights
 - explicit "always/never" agent conventions and a required verification command
+- a dedicated "One Command" section at the top for quick post-change validation
 
 If you want agents to explicitly treat `qp.yaml` as an accrual surface for learned repo knowledge, enable:
 
