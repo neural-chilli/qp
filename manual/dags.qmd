@@ -1,0 +1,34 @@
+---
+title: "DAGs and Run Expressions"
+---
+
+Use `run` for DAG-style execution.
+
+## Sequence and Parallel
+
+```yaml
+run: setup -> par(lint, test) -> build
+```
+
+## Conditional Branching
+
+```yaml
+run: when(branch() == "main", deploy, notify)
+```
+
+## Multi-Branch Switch
+
+```yaml
+run: >
+  switch(env("TARGET"),
+    "api": build-api -> deploy-api,
+    "web": build-web -> deploy-web,
+    "all": par(build-api, build-web)
+  )
+```
+
+## Dry-Run
+
+```bash
+qp check --dry-run
+```

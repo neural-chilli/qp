@@ -1,0 +1,25 @@
+---
+title: "Windows Daemon Mode"
+---
+
+Daemon mode is a Windows optimization for AV-heavy environments.
+
+## Setup
+
+```bash
+qp setup --windows
+```
+
+This configures:
+
+- PowerShell shim
+- Task Scheduler auto-start on login
+
+## Control
+
+```bash
+qp daemon start
+qp daemon stop
+qp daemon status
+qp daemon restart
+```

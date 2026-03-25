@@ -1,0 +1,28 @@
+---
+title: "Cookbook: CI Guard"
+---
+
+```yaml
+tasks:
+  fmt:
+    desc: Format
+    cmd: gofmt -w .
+
+  test:
+    desc: Test
+    cmd: go test ./...
+
+  check:
+    desc: CI verification
+    run: fmt -> test
+
+guards:
+  default:
+    steps: [check]
+```
+
+CI command:
+
+```bash
+qp guard --json
+```

@@ -1,0 +1,52 @@
+---
+title: "Getting Started"
+---
+
+## Install
+
+```bash
+go install github.com/neural-chilli/qp/cmd/qp@latest
+```
+
+## Create `qp.yaml`
+
+```bash
+qp init
+```
+
+Minimal starter:
+
+```yaml
+project: my-service
+default: check
+
+tasks:
+  lint:
+    desc: Lint code
+    cmd: golangci-lint run
+
+  test:
+    desc: Run tests
+    cmd: go test ./...
+
+  check:
+    desc: Local verification
+    run: par(lint, test)
+```
+
+## Core Commands
+
+```bash
+qp list
+qp help check
+qp check
+qp guard
+```
+
+## Safety Defaults
+
+Use `safety` on tasks and run unsafe tasks only with explicit opt-in:
+
+```bash
+qp deploy --allow-unsafe
+```

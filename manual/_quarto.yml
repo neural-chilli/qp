@@ -1,0 +1,58 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "Quickly Please (qp) Manual"
+  site-url: "https://neural-chilli.github.io/qp/"
+  repo-url: "https://github.com/neural-chilli/qp"
+  favicon: assets/qp-logo-rounded.png
+  navbar:
+    logo: assets/qp-logo-rounded.png
+    logo-alt: "qp logo"
+    left:
+      - href: index.qmd
+        text: Home
+      - href: getting-started.qmd
+        text: Getting Started
+      - href: cookbook/index.qmd
+        text: Cookbook
+      - href: ../README.md
+        text: README
+  sidebar:
+    style: "docked"
+    search: true
+    collapse-level: 2
+    contents:
+      - section: "Manual"
+        contents:
+          - index.qmd
+          - getting-started.qmd
+          - tasks-and-params.qmd
+          - dags.qmd
+          - expressions.qmd
+          - vars-templates-profiles-secrets.qmd
+          - events-json.qmd
+          - windows-daemon.qmd
+      - section: "Cookbook"
+        contents:
+          - cookbook/index.qmd
+          - cookbook/ci-guard.qmd
+          - cookbook/monorepo.qmd
+          - cookbook/release-flow.qmd
+
+format:
+  html:
+    theme:
+      light: flatly
+      dark: darkly
+    css: styles.scss
+    toc: true
+    toc-depth: 3
+    toc-location: right
+    embed-resources: true
+    code-copy: true
+    code-overflow: wrap
+
+execute:
+  freeze: auto

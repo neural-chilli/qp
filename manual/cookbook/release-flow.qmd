@@ -1,0 +1,38 @@
+---
+title: "Cookbook: Release Flow"
+---
+
+```yaml
+profiles:
+  _default: "{{env.QP_PROFILE}}"
+  prod:
+    tasks:
+      deploy:
+        when: branch() == "main"
+
+tasks:
+  build:
+    desc: Build release artifacts
+    cmd: make dist
+
+  publish:
+    desc: Publish release
+    cmd: ./scripts/publish.sh
+    retry: 3
+    retry_delay: 5s
+    retry_backoff: exponential
+
+  deploy:
+    desc: Deploy release
+    cmd: ./scripts/deploy.sh
+
+  release:
+    desc: Release pipeline
+    run: build -> publish -> deploy
+```
+
+Run:
+
+```bash
+QP_PROFILE=prod qp release --events
+```

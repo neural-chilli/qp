@@ -1,0 +1,27 @@
+---
+title: "Cookbook: Monorepo Scopes"
+---
+
+```yaml
+scopes:
+  api:
+    desc: API service
+    paths: ["services/api/", "internal/api/"]
+
+  web:
+    desc: Web app
+    paths: ["apps/web/"]
+
+tasks:
+  api-test:
+    desc: API tests
+    cmd: go test ./services/api/...
+    scope: api
+
+  web-test:
+    desc: Web tests
+    cmd: npm test --prefix apps/web
+    scope: web
+```
+
+Use `qp plan` / `qp diff-plan` to focus checks by changed files.

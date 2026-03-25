@@ -1,0 +1,38 @@
+---
+title: "qp Manual"
+---
+
+`qp` is a repo-local task runner and workflow runtime driven by one `qp.yaml`.
+
+## Start Here
+
+1. Install `qp`.
+2. Scaffold or adapt `qp.yaml`.
+3. Run `qp list`, `qp help <task>`, and `qp check`.
+4. Add DAGs, expressions, and profiles as your repo grows.
+
+## Why This Manual
+
+This guide is split across focused pages so you can jump straight to the part you need:
+
+- task modeling and parameters
+- DAG execution
+- CEL expressions
+- vars/templates/profiles/secrets
+- structured events and JSON output
+- Windows daemon mode
+- cookbook recipes
+
+## Quick Install
+
+```bash
+go install github.com/neural-chilli/qp/cmd/qp@latest
+```
+
+Then in a repo:
+
+```bash
+qp init
+qp list
+qp check
+```

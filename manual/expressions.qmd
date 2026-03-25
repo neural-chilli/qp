@@ -1,0 +1,30 @@
+---
+title: "Expressions (CEL)"
+---
+
+Use CEL in task `when` clauses and run-expression nodes.
+
+## Built-ins
+
+- `branch()`
+- `env("NAME")`
+- `profile()`
+- `tag()`
+- `param("name")`
+- `has_param("name")`
+- `file_exists("path")`
+- `os`
+
+## Examples
+
+```yaml
+tasks:
+  deploy:
+    desc: Deploy only from main
+    cmd: ./scripts/deploy.sh
+    when: branch() == "main" && profile() == "prod"
+```
+
+```yaml
+when: os == "darwin"
+```

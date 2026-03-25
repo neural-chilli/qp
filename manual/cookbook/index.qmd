@@ -1,0 +1,11 @@
+---
+title: "Cookbook"
+---
+
+Practical, copy-pasteable examples for real repos.
+
+- CI guard pipeline
+- monorepo scoped checks
+- release flow with retries and profiles
+
+Use these as starting points and adapt to your repo layout.

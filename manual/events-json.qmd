@@ -1,0 +1,30 @@
+---
+title: "Events and JSON Output"
+---
+
+## JSON Output
+
+```bash
+qp check --json
+qp guard --json
+```
+
+## NDJSON Events
+
+```bash
+qp check --events 2>events.jsonl
+```
+
+Event types include:
+
+- `plan`
+- `start`
+- `output`
+- `done`
+- `skipped`
+- `complete`
+- `retry`
+- `iteration`
+- `approval_required`
+
+Plan events include graph detail (`nodes`, `edges`).
