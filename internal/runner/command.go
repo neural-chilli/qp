@@ -255,7 +255,8 @@ func resolveParamValues(task config.Task, provided map[string]string) (map[strin
 
 func interpolateTaskValue(value string, params map[string]string, vars map[string]string, templates map[string]string, secrets map[string]string) string {
 	out := value
-	for i := 0; i < 3; i++ {
+	const maxInterpolationDepth = 10
+	for i := 0; i < maxInterpolationDepth; i++ {
 		prev := out
 		for name, tpl := range templates {
 			out = strings.ReplaceAll(out, "{{template."+name+"}}", tpl)
@@ -270,7 +271,7 @@ func interpolateTaskValue(value string, params map[string]string, vars map[strin
 			out = strings.ReplaceAll(out, "{{secret."+name+"}}", secretValue)
 		}
 		if out == prev {
-			break
+			return out
 		}
 	}
 	return out

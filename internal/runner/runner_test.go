@@ -522,6 +522,40 @@ func TestRunCmdTaskInterpolatesVarsAndTemplates(t *testing.T) {
 	}
 }
 
+func TestRunCmdTaskInterpolatesDeepTemplateChains(t *testing.T) {
+	t.Parallel()
+
+	repoRoot := t.TempDir()
+	r := New(&config.Config{
+		Vars: map[string]string{
+			"name": "world",
+		},
+		Templates: config.Templates{
+			Snippets: map[string]string{
+				"a": "{{template.b}}",
+				"b": "{{template.c}}",
+				"c": "{{template.d}}",
+				"d": "{{template.e}}",
+				"e": "hello {{vars.name}}",
+			},
+		},
+		Tasks: map[string]config.Task{
+			"greet": {
+				Desc: "greet",
+				Cmd:  `printf "{{template.a}}"`,
+			},
+		},
+	}, repoRoot)
+
+	result, err := r.Run("greet", Options{Stdout: io.Discard, Stderr: io.Discard})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if result.Stdout != "hello world" {
+		t.Fatalf("Stdout = %q, want hello world", result.Stdout)
+	}
+}
+
 func TestRunCmdTaskSilentOmitsResolvedCmd(t *testing.T) {
 	t.Parallel()
 
