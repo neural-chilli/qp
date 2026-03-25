@@ -1,6 +1,6 @@
 module github.com/neural-chilli/qp
 
-go 1.22
+go 1.26.1
 
 require (
 	github.com/Microsoft/go-winio v0.6.2
