@@ -1,0 +1,110 @@
+---
+title: "Cookbook: Migration from Make"
+---
+
+This recipe helps you move from `make` to `qp` incrementally without disrupting team workflows.
+
+## Strategy
+
+1. Keep `Makefile` as source of truth initially.
+2. Wrap key targets in `qp` tasks.
+3. Add structure (`safety`, `scope`, `guards`, params) over time.
+4. Switch CI to `qp guard` when stable.
+
+## Step 1: Wrap Existing Targets
+
+```yaml
+tasks:
+  lint:
+    desc: Run make lint
+    cmd: make lint
+  test:
+    desc: Run make test
+    cmd: make test
+  build:
+    desc: Run make build
+    cmd: make build
+  check:
+    desc: Basic quality gate
+    steps: [lint, test]
+```
+
+Now the team can use:
+
+```bash
+qp check
+qp build
+```
+
+## Step 2: Add Safety and Scope
+
+```yaml
+scopes:
+  backend:
+    desc: Core API and domain code
+    paths: [cmd/, internal/]
+
+tasks:
+  deploy:
+    desc: Existing deploy target
+    cmd: make deploy
+    safety: external
+    agent: false
+    scope: backend
+```
+
+This adds guardrails that Make alone usually does not encode.
+
+## Step 3: Replace High-Value Targets Natively
+
+Move frequently changed targets from `make` commands to direct task definitions:
+
+```yaml
+tasks:
+  test:
+    desc: Run Go tests
+    cmd: go test ./...
+    error_format: go_test
+```
+
+Benefits:
+
+- structured error parsing
+- clearer param handling
+- better agent/context integration
+
+## Step 4: Introduce Guarded CI
+
+```yaml
+guards:
+  ci:
+    steps: [check, build]
+
+tasks:
+  ci:
+    desc: CI entrypoint
+    cmd: qp guard ci --json
+```
+
+Then switch CI job command from `make` to:
+
+```bash
+qp ci
+```
+
+## Migration Checklist
+
+1. Start with wrappers.
+2. Add metadata (`safety`, `scope`, `error_format`).
+3. Replace brittle shell-heavy targets.
+4. Keep aliases for old command names during transition.
+
+## Compatibility Tip
+
+You can keep developer muscle memory with aliases:
+
+```yaml
+aliases:
+  verify: check
+  b: build
+```

@@ -66,6 +66,7 @@ website:
           - cookbook/rust-workspace.qmd
           - cookbook/java-gradle.qmd
           - cookbook/agent-workflow.qmd
+          - cookbook/migration-from-make.qmd
 
 format:
   html:
