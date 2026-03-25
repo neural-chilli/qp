@@ -1,0 +1,108 @@
+---
+title: "Codemap"
+---
+
+Codemap is structured repository knowledge in `qp.yaml`: package purpose, key types, entry points, conventions, and glossary terms.
+
+It powers:
+
+- `qp explain`
+- richer `qp context` output
+- better planning/agent brief relevance
+
+## Codemap Structure
+
+```yaml
+codemap:
+  packages:
+    internal/runner:
+      desc: Core task execution engine
+      key_types: [Runner, Result, EventStream]
+      entry_points: [Run]
+      conventions:
+        - Keep stdout/stderr handling deterministic for tests
+      depends_on: [internal/config]
+  conventions:
+    - Keep task names verb-first and user-facing
+  glossary:
+    guard: Validation bundle that always evaluates all configured checks
+```
+
+## Querying With `qp explain`
+
+`qp explain` accepts:
+
+1. task names (or aliases)
+2. codemap package names
+3. codemap key type / entry point names
+4. glossary terms
+
+```bash
+qp explain check
+qp explain internal/runner
+qp explain Runner
+qp explain guard
+qp explain internal/runner --json
+```
+
+This gives maintainers and agents a shared semantic lookup path instead of hunting through source manually.
+
+## Inferring A Starter Codemap
+
+Generate an initial codemap block:
+
+```bash
+qp init --codemap
+```
+
+Inference scans source directories and supports multiple ecosystems (Go, Python, JS/TS, Rust, Java, C/C++).
+
+It appends an inferred `codemap.packages` section to `qp.yaml` if one does not already exist.
+
+## Practical Refinement Workflow
+
+1. Run `qp init --codemap`.
+2. Trim noisy/inaccurate inferred entries.
+3. Add missing domain vocabulary to `glossary`.
+4. Add conventions that should influence code review and agent behavior.
+5. Keep codemap updated as architecture evolves.
+
+## Worked Example: Domain-Mapped Repo
+
+```yaml
+codemap:
+  packages:
+    internal/features/profile:
+      desc: Data profile analysis and reporting
+      key_types: [Service, ProfileResult]
+      entry_points: [Run]
+      depends_on: [internal/platform/duckdb]
+    internal/features/validate:
+      desc: Config and workbook validation
+      key_types: [Validator]
+      entry_points: [Validate]
+  glossary:
+    profile: Statistical summary of dataset characteristics
+    drift: Divergence between baseline and target distributions
+```
+
+Now:
+
+```bash
+qp explain profile
+qp explain internal/features/profile
+```
+
+Both humans and automation can quickly resolve domain intent.
+
+## Relationship To Scopes
+
+Scopes answer "where should changes happen?"
+
+Codemap answers "what do these areas mean?"
+
+Use both together for high-signal planning and repair flows.
+
+## Next Step
+
+For change-intent generation tied to files and task/scopes, continue to [Planning](planning.qmd).

@@ -40,6 +40,7 @@ website:
           - caching.qmd
           - retry.qmd
           - context.qmd
+          - codemap.qmd
           - tasks-and-params.qmd
           - dags.qmd
           - expressions.qmd

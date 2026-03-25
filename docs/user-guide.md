@@ -86,6 +86,7 @@ If you prefer a browsable multi-page manual with search, left navigation, and ri
 - [Retry policies](../manual/retry.qmd)
 - [Events and JSON output](../manual/events-and-json.qmd)
 - [Context](../manual/context.qmd)
+- [Codemap](../manual/codemap.qmd)
 
 ## Windows Daemon Mode
 
