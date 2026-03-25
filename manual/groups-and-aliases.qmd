@@ -1,0 +1,98 @@
+---
+title: "Groups and Aliases"
+---
+
+Groups and aliases improve discoverability without changing runtime behavior. They are especially useful once `qp.yaml` has dozens of tasks.
+
+## Groups
+
+A group is a named task family with optional description.
+
+```yaml
+groups:
+  quality:
+    desc: Fast local quality checks
+    tasks: [lint, test, check]
+  release:
+    desc: Packaging and publishing tasks
+    tasks: [build, package, publish]
+```
+
+Groups are used by:
+
+- `qp list` (human-readable grouped output)
+- `qp help <group>` (group summary + member tasks)
+- generated docs and agent-facing views
+
+### Example
+
+```text
+$ qp help quality
+Group: quality
+Description: Fast local quality checks
+Tasks:
+  - lint
+  - test
+  - check
+```
+
+## Aliases
+
+Aliases map a short or migration-friendly name to an existing task.
+
+```yaml
+tasks:
+  build:
+    desc: Build all binaries
+    cmd: go build ./cmd/...
+
+aliases:
+  b: build
+  compile: build
+```
+
+```bash
+qp b
+qp compile
+qp help b
+```
+
+All aliases execute the same underlying task definition.
+
+## Aliases And Default Task
+
+`default:` can point at either a task name or an alias:
+
+```yaml
+default: b
+```
+
+With this config, plain `qp` runs `build`.
+
+## Practical Naming Pattern
+
+Use this pattern in larger repos:
+
+1. Keep canonical task names explicit (`build-backend`, `build-web`).
+2. Add short aliases only for very common commands (`b`, `t`, `g`).
+3. Use groups for mental domains (`quality`, `release`, `ops`, `db`).
+
+```yaml
+groups:
+  quality:
+    tasks: [lint, test, check]
+  ops:
+    tasks: [db-migrate, deploy-staging, deploy-prod]
+
+aliases:
+  t: test
+  g: guard
+```
+
+## JSON View
+
+`qp list --json` includes group and alias metadata, which helps editor integrations and internal tooling keep command palettes accurate.
+
+## Next Step
+
+For command interfaces and task behavior details, continue to [Tasks](tasks.qmd).
