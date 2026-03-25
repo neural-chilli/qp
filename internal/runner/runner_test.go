@@ -926,6 +926,36 @@ tasks:
 	}
 }
 
+func TestRunCmdTaskDoesNotRedactShortSecretValues(t *testing.T) {
+	repoRoot := t.TempDir()
+	t.Setenv("SHORT_SECRET", "token")
+	if err := os.WriteFile(filepath.Join(repoRoot, "qp.yaml"), []byte(`
+secrets:
+  api_key:
+    from: env
+    env: SHORT_SECRET
+tasks:
+  reveal:
+    desc: reveal
+    cmd: printf "{{secret.api_key}}"
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := config.Load(filepath.Join(repoRoot, "qp.yaml"))
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	r := New(cfg, repoRoot)
+	result, err := r.Run("reveal", Options{Stdout: io.Discard, Stderr: io.Discard})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if result.Stdout != "token" {
+		t.Fatalf("Stdout = %q, want short secret to remain visible", result.Stdout)
+	}
+}
+
 func TestRunTaskWhenCanUseVars(t *testing.T) {
 	t.Parallel()
 

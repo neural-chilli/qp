@@ -429,9 +429,10 @@ type secretRedactor struct {
 }
 
 func newSecretRedactor(secrets map[string]string) *secretRedactor {
+	const minRedactionLength = 8
 	values := make([]string, 0, len(secrets))
 	for _, value := range secrets {
-		if strings.TrimSpace(value) == "" {
+		if strings.TrimSpace(value) == "" || len(value) < minRedactionLength {
 			continue
 		}
 		values = append(values, value)
