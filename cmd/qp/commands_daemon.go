@@ -1,11 +1,9 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"os"
-	"os/signal"
 	"runtime"
 	"time"
 
@@ -38,8 +36,35 @@ func runSetup(args []string, stdout, stderr *os.File) int {
 		fmt.Fprintln(stdout, "Tip: run `qp setup --windows` to enable daemon mode.")
 		return 0
 	}
-
-	return runDaemon([]string{"start"}, stdout, stderr)
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		printError(stderr, err)
+		return 1
+	}
+	exePath, err := os.Executable()
+	if err != nil {
+		printError(stderr, err)
+		return 1
+	}
+	manager := daemon.New(homeDir)
+	status, err := manager.Start(exePath)
+	if err != nil {
+		printError(stderr, err)
+		return 1
+	}
+	profilePath, err := installWindowsPowerShellShim()
+	if err != nil {
+		printError(stderr, err)
+		return 1
+	}
+	fmt.Fprintln(stdout, "✓ Started qp daemon")
+	fmt.Fprintf(stdout, "  pid: %d\n", status.PID)
+	fmt.Fprintf(stdout, "  log: %s\n", status.LogPath)
+	fmt.Fprintln(stdout, "✓ Added qp function to PowerShell profile")
+	fmt.Fprintf(stdout, "  profile: %s\n", profilePath)
+	fmt.Fprintln(stdout)
+	fmt.Fprintln(stdout, "Restart your terminal to activate.")
+	return 0
 }
 
 func runDaemon(args []string, stdout, stderr *os.File) int {
@@ -117,8 +142,14 @@ func runDaemon(args []string, stdout, stderr *os.File) int {
 
 func runDaemonServe(stdout, stderr *os.File) int {
 	_, _ = stdout, stderr
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
-	<-ctx.Done()
+	exePath, err := os.Executable()
+	if err != nil {
+		printError(stderr, err)
+		return 1
+	}
+	if err := daemon.Serve(exePath, stderr); err != nil {
+		printError(stderr, err)
+		return 1
+	}
 	return 0
 }

@@ -20,6 +20,10 @@ func run(args []string, stdout, stderr *os.File) int {
 	forceNoColor.Store(noColor)
 	defer forceNoColor.Store(prevNoColor)
 
+	if code, ok := maybeProxyToDaemon(args, stdout, stderr); ok {
+		return code
+	}
+
 	if len(args) == 0 {
 		cfg, _, err := loadConfig()
 		if err == nil && cfg.Default != "" {
