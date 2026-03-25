@@ -91,6 +91,7 @@ If you prefer a browsable multi-page manual with search, left navigation, and ri
 - [Repair](../manual/repair.qmd)
 - [Agent integration](../manual/agent-integration.qmd)
 - [Init and scaffolding](../manual/init-and-scaffolding.qmd)
+- [Architecture checks](../manual/architecture.qmd)
 
 ## Windows Daemon Mode
 

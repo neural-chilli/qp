@@ -1,0 +1,85 @@
+---
+title: "Architecture Checks"
+---
+
+`qp arch-check` enforces architecture boundaries declared in `qp.yaml`.
+
+It is designed for practical, repo-local architecture governance that can run in both local workflows and CI.
+
+## Configure Architecture Rules
+
+```yaml
+architecture:
+  layers: [repo, service, api]
+  domains:
+    auth:
+      root: src/auth
+      layers: [repo, service, api]
+    payments:
+      root: src/payments
+      layers: [repo, service, api]
+  rules:
+    - direction: forward
+    - cross_domain: deny
+    - cross_cutting: api
+```
+
+## Run Checks
+
+```bash
+qp arch-check
+qp arch-check --json
+```
+
+Exit code is non-zero when violations are found.
+
+## Rule Meanings
+
+### `direction: forward`
+
+Enforces layer ordering (for example repo -> service -> api).
+
+### `cross_domain: deny`
+
+Prevents imports across domain boundaries unless explicitly allowed by layering/cross-cutting rules.
+
+### `cross_cutting: <layer>`
+
+Marks a layer that can be referenced across domains (for shared API abstractions, for example).
+
+## Typical Violation Output
+
+Human mode highlights offending imports and expected boundaries.
+
+JSON mode is easier for CI parsers and review bots.
+
+```bash
+qp arch-check --json | jq .
+```
+
+## Current Scope
+
+Architecture analysis currently targets Go import relationships for in-repo module code.
+
+For non-Go repos, keep architecture intent in codemap/scopes and revisit enforcement strategy per language ecosystem.
+
+## Guard Integration
+
+Add architecture checks into your quality gate:
+
+```yaml
+tasks:
+  arch:
+    desc: Enforce architecture boundaries
+    cmd: qp arch-check --json
+
+guards:
+  ci:
+    steps: [lint, test, arch]
+```
+
+This ensures boundary drift is caught with the same signal path as test/lint regressions.
+
+## Next Step
+
+For continuous feedback on file changes, continue to [Watch](watch.qmd).

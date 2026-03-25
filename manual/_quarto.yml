@@ -45,6 +45,7 @@ website:
           - repair.qmd
           - agent-integration.qmd
           - init-and-scaffolding.qmd
+          - architecture.qmd
           - tasks-and-params.qmd
           - dags.qmd
           - expressions.qmd
