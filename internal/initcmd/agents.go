@@ -60,8 +60,21 @@ func renderHumansDoc(cfg *config.Config) string {
 
 func renderAgentDoc(name string, cfg *config.Config) string {
 	var builder strings.Builder
+	goldenCommand := "qp guard"
+	if len(cfg.Guards) == 0 {
+		if cfg.Default != "" {
+			goldenCommand = "qp " + cfg.Default
+		} else {
+			goldenCommand = "qp <task>"
+		}
+	}
 	builder.WriteString("# " + name + "\n\n")
 	builder.WriteString("This file is generated from `qp.yaml` and is the repo-specific workflow guide for coding agents.\n\n")
+	builder.WriteString("## Agent Conventions\n\n")
+	builder.WriteString(fmt.Sprintf("- Always run `%s` before reporting work as complete.\n", goldenCommand))
+	builder.WriteString("- Always prefer an existing `qp` task over ad hoc shell commands.\n")
+	builder.WriteString("- Never run `destructive` or `external` tasks unless explicitly asked.\n")
+	builder.WriteString("- Never edit files outside the relevant task scope unless the user asks.\n")
 	builder.WriteString("## How To Work Here\n\n")
 	builder.WriteString("- Start with `qp list` to discover the available tasks.\n")
 	builder.WriteString("- Use `qp help <task>` before inventing an equivalent command.\n")

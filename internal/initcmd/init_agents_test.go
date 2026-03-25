@@ -164,6 +164,8 @@ func TestRenderAgentDocIncludesKnowledgeAccrualGuidance(t *testing.T) {
 
 	got := renderAgentDoc("AGENTS", cfg)
 	for _, want := range []string{
+		"## Agent Conventions",
+		"Always run `qp guard` before reporting work as complete.",
 		"## Knowledge Accrual",
 		"Build prerequisites or ordering -> task `needs`",
 		"Package purpose or structure -> `codemap.packages`",
