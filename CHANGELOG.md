@@ -6,6 +6,13 @@ The format is intentionally lightweight and based on tagged releases.
 
 ## [Unreleased]
 
+## [v0.5.1] - 2026-03-26
+
+### Fixed
+
+- release workflow now builds and packages cross-platform artifacts directly (no stale `make dist` dependency)
+- release docs and user guide now match the actual artifact build flow
+
 ## [v0.5.0] - 2026-03-26
 
 ### Added

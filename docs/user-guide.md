@@ -31,14 +31,43 @@ If you prefer not to install with Go, tagged releases now also publish prebuilt 
 If you are working from a local checkout:
 
 ```bash
-make build
-./bin/qp list
+go build ./cmd/qp
+./qp list
 ```
 
 For local cross-platform release artifacts:
 
 ```bash
-make dist
+VERSION=v0.5.1
+TAG="${VERSION}"
+OUT_VERSION="${VERSION#v}"
+ROOT_DIR="$(pwd)"
+mkdir -p dist
+
+build_one() {
+  os="$1"
+  arch="$2"
+  ext="$3"
+  bin="qp"
+  [ "$os" = "windows" ] && bin="qp.exe"
+  tmp="$(mktemp -d)"
+  CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -trimpath -ldflags "-s -w -X main.version=${TAG}" -o "${tmp}/${bin}" ./cmd/qp
+  base="qp_v${OUT_VERSION}_${os}_${arch}"
+  if [ "$ext" = "zip" ]; then
+    (cd "$tmp" && zip -q "${ROOT_DIR}/dist/${base}.zip" "$bin")
+  else
+    tar -C "$tmp" -czf "dist/${base}.tar.gz" "$bin"
+  fi
+  rm -rf "$tmp"
+}
+
+build_one darwin amd64 tar.gz
+build_one darwin arm64 tar.gz
+build_one linux amd64 tar.gz
+build_one linux arm64 tar.gz
+build_one windows amd64 zip
+build_one windows arm64 zip
+(cd dist && sha256sum *.tar.gz *.zip > checksums.txt)
 ```
 
 You can read the bundled docs from the installed binary too:
